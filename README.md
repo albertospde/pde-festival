@@ -27,3 +27,8 @@ Libri collegato (per titoli ed evasione), entrambi da BookUp → Accessi.
 
 ## Logo
 `py scripts/crea_logo.py` rigenera i file in `logo/` (stesso pavone e caratteri di Giro Manager).
+
+## Accesso
+Per ora riservata a `alberto.simola@pde.it`. Per abilitare altri utenti:
+`insert into public.ff_utenti_abilitati(email) values ('nome@pde.it');` e aggiungere l'email
+nell'attributo `data-solo-per` della card nel PDE Hub (separata da virgola).

@@ -439,8 +439,9 @@ async function logEvento(praticaId, azione, dettaglio){
 async function avvia(){
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { $('login').classList.remove('hidden'); return; }
-  const role = session.user?.user_metadata?.role || '';
-  if (role === 'agente') {
+  // Accesso riservato agli utenti in ff_utenti_abilitati (stesso controllo delle policy RLS)
+  const { data: abilitato } = await sb.rpc('ff_abilitato');
+  if (!abilitato) {
     document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;">
       <div><div style="font-size:48px;margin-bottom:16px;">🔒</div><h2 style="margin-bottom:8px;">Accesso non autorizzato</h2>
       <p class="muted" style="margin-bottom:24px;">Non hai i permessi per accedere a questa applicazione.</p>
