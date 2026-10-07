@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDE Festival</title>
+<link rel="icon" type="image/png" href="logo/favicon-64.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// Tema condiviso con il Hub e le altre app PDE (stessa origine → stessa chiave)
+(function () {
+  function applica(t) {
+    if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
+  }
+  try { applica(localStorage.getItem('pde-hub-theme')); } catch (e) {}
+  window.setTheme = function (t) {
+    applica(t);
+    try { localStorage.setItem('pde-hub-theme', t); } catch (e) {}
+  };
+  window.addEventListener('storage', function (e) { if (e.key === 'pde-hub-theme') applica(e.newValue); });
+})();
+</script>
+<style>
+/* Tema scuro (predefinito, come il Hub) */
+:root{
+  --bg:#0b1128; --card:#121a42; --card-2:#18224f; --text:#e6e9f5; --muted:#8c93b8;
+  --border:rgba(255,255,255,.12); --navy:#001c50; --blu:#2f7cf6; --blu-2:#005ce0; --ciano:#10ace0;
+  --ok:#3fb36b; --ok-bg:rgba(63,179,107,.14); --warn:#e0a13a; --warn-bg:rgba(224,161,58,.14);
+  --ko:#ef5b5b; --ko-bg:rgba(239,91,91,.14); --info-bg:rgba(47,124,246,.14);
+  --header:#070b22; --input:#0d1334; --shadow:0 8px 30px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#eef2f9; --card:#ffffff; --card-2:#f4f7fc; --text:#0b1a3a; --muted:#5a6388;
+  --border:rgba(26,45,107,.16); --blu:#005ce0; --blu-2:#0049b8; --ciano:#0c8fbd;
+  --ok:#1a7f37; --ok-bg:#e9f7ee; --warn:#9a6700; --warn-bg:#fff4e0; --ko:#c62828; --ko-bg:#fdeceb; --info-bg:#e6efff;
+  --header:#ffffff; --input:#ffffff; --shadow:0 8px 30px rgba(26,45,107,.12);
+  color-scheme:light;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;min-height:100vh;}
+button,input,select,textarea{font:inherit;color:inherit;}
+a{color:var(--blu);}
+.mono{font-family:'DM Mono',monospace;}
+.muted{color:var(--muted);}
+.hidden{display:none !important;}
+
+/* ── Header ── */
+header{background:var(--header);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;}
+.logo{height:40px;display:block;}
+.logo-light{display:none;}
+html[data-theme="light"] .logo-dark{display:none;}
+html[data-theme="light"] .logo-light{display:block;}
+nav{display:flex;gap:4px;margin-left:12px;}
+.nav-btn{background:none;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:500;}
+.nav-btn:hover{color:var(--text);background:var(--card-2);}
+.nav-btn.active{color:#fff;background:var(--blu);}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.theme-switch{display:flex;gap:2px;background:var(--card-2);border:1px solid var(--border);border-radius:6px;padding:2px;}
+.theme-opt{background:transparent;border:none;border-radius:4px;color:var(--muted);font-size:12px;padding:4px 10px;cursor:pointer;}
+html:not([data-theme="light"]) .theme-opt[data-set="dark"],html[data-theme="light"] .theme-opt[data-set="light"]{color:var(--text);background:var(--card);}
+.user-chip{font-size:12px;color:var(--muted);}
+
+main{max-width:1320px;margin:0 auto;padding:22px 24px 60px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+.card h2{font-size:17px;margin-bottom:12px;}
+.card h3{font-size:15px;margin-bottom:10px;}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+.field{display:flex;flex-direction:column;gap:4px;min-width:150px;flex:1;}
+.field.sm{flex:0 0 160px;min-width:0;}
+.field.lg{flex:2;}
+.field label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],select,textarea{
+  background:var(--input);border:1px solid var(--border);border-radius:7px;padding:8px 10px;width:100%;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blu);}
+textarea{resize:vertical;min-height:80px;}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600;white-space:nowrap;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--blu);color:#fff;}
+.btn-primary:hover:not(:disabled){background:var(--blu-2);}
+.btn-ok{background:var(--ok);color:#fff;}
+.btn-sec{background:var(--card-2);border-color:var(--border);}
+.btn-sec:hover:not(:disabled){border-color:var(--blu);}
+.btn-ko{background:transparent;border-color:var(--ko);color:var(--ko);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.err{color:var(--ko);font-weight:600;font-size:13px;min-height:18px;}
+
+/* ── Banner connessioni ── */
+.banner{border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;border:1px solid var(--border);}
+.banner.warn{background:var(--warn-bg);border-color:var(--warn);}
+.banner.info{background:var(--info-bg);border-color:var(--blu);}
+.banner.ok{background:var(--ok-bg);border-color:var(--ok);}
+
+/* ── Elenco pratiche ── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.kpi .n{font-size:26px;font-weight:700;}
+.kpi .l{font-size:12px;color:var(--muted);}
+.kpi.warn .n{color:var(--warn);} .kpi.ko .n{color:var(--ko);} .kpi.ok .n{color:var(--ok);}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.chip{border:1px solid var(--border);background:var(--card);border-radius:20px;padding:5px 12px;cursor:pointer;font-size:12px;color:var(--muted);}
+.chip.active{background:var(--blu);border-color:var(--blu);color:#fff;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr.click{cursor:pointer;}
+tr.click:hover td{background:var(--card-2);}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+td input[type=number]{width:80px;padding:5px 7px;}
+td input[type=text],td select,td input[type=date]{padding:5px 7px;}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.p-nuova{background:var(--info-bg);color:var(--blu);}
+.p-ordinata{background:var(--ok-bg);color:var(--ok);}
+.p-in_recupero{background:var(--warn-bg);color:var(--warn);}
+.p-chiusa{background:var(--card-2);color:var(--muted);}
+.p-ko{background:var(--ko-bg);color:var(--ko);}
+.p-ok{background:var(--ok-bg);color:var(--ok);}
+.p-warn{background:var(--warn-bg);color:var(--warn);}
+.empty{text-align:center;color:var(--muted);padding:40px 10px;}
+
+/* ── Nuova pratica: drop mail ── */
+.drop{border:2px dashed var(--border);border-radius:14px;padding:34px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--card);}
+.drop:hover,.drop.over{border-color:var(--blu);background:var(--info-bg);}
+.drop .big{font-size:40px;margin-bottom:6px;}
+.drop b{font-size:16px;}
+.found{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;background:var(--ok-bg);color:var(--ok);margin-left:6px;font-weight:600;text-transform:none;letter-spacing:0;}
+.dropdown{position:relative;}
+.dd-list{position:absolute;left:0;right:0;top:100%;z-index:30;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);max-height:280px;overflow:auto;}
+.dd-item{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--border);}
+.dd-item:hover{background:var(--card-2);}
+.dd-item .sub{font-size:12px;color:var(--muted);}
+
+/* ── Dettaglio pratica ── */
+.pr-head{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;}
+.pr-num{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);}
+.pr-title{font-size:22px;font-weight:700;}
+.pr-meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:13px;}
+.pr-meta span b{color:var(--muted);font-weight:500;margin-right:4px;}
+.steps{display:flex;gap:0;margin:16px 0 4px;flex-wrap:wrap;}
+.step{flex:1;min-width:120px;position:relative;padding:10px 8px 0;text-align:center;font-size:12px;color:var(--muted);}
+.step::before{content:"";position:absolute;top:21px;left:-50%;width:100%;height:3px;background:var(--border);z-index:0;}
+.step:first-child::before{display:none;}
+.step .dot{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--card-2);border:2px solid var(--border);}
+.step.done{color:var(--text);} .step.done .dot{background:var(--ok);border-color:var(--ok);color:#fff;}
+.step.done::before{background:var(--ok);}
+.step.cur{color:var(--text);font-weight:600;} .step.cur .dot{border-color:var(--blu);color:var(--blu);}
+.next{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--info-bg);border:1px solid var(--blu);border-radius:10px;padding:12px 14px;margin-top:14px;}
+.next .t{flex:1;min-width:240px;}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap;}
+.tab{background:none;border:none;padding:9px 14px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-weight:500;}
+.tab.active{color:var(--text);border-bottom-color:var(--blu);}
+.log{background:var(--input);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;max-height:220px;overflow:auto;margin-top:10px;}
+.log div{padding:2px 0;}
+pre.mail{white-space:pre-wrap;font-family:'DM Mono',monospace;font-size:12px;background:var(--input);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:520px;overflow:auto;}
+.ev{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);}
+.ev .when{font-size:12px;color:var(--muted);min-width:130px;}
+.ev .who{font-size:12px;color:var(--muted);}
+
+/* ── Login ── */
+.login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:32px;width:400px;max-width:92vw;box-shadow:var(--shadow);}
+.login-box img{width:100%;margin-bottom:22px;}
+.login-box .field{margin-bottom:12px;}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:8px;font-weight:600;z-index:200;box-shadow:var(--shadow);max-width:90vw;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:90;padding:16px;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;width:620px;max-width:100%;max-height:90vh;overflow:auto;}
+
+@media (max-width:760px){
+  header{flex-wrap:wrap;padding:10px 16px;}
+  nav{margin-left:0;order:3;width:100%;}
+  main{padding:16px;}
+  .field.sm{flex:1 1 140px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN (sessione condivisa con PDE Hub) ── -->
+<div class="login hidden" id="login">
+  <div class="login-box">
+    <img class="logo-dark" src="logo/pde-festival-logo-scuro-960.png" alt="PDE Festival">
+    <img class="logo-light" src="logo/pde-festival-logo-960.png" alt="PDE Festival">
+    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="nome@pde.it" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input type="password" id="login-pw" autocomplete="current-password"></div>
+    <div class="err" id="login-err"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px;" id="login-btn">Accedi</button>
+  </div>
+</div>
+
+<header>
+  <img class="logo logo-dark" src="logo/pde-festival-logo-scuro-960.png" alt="PDE Festival">
+  <img class="logo logo-light" src="logo/pde-festival-logo-960.png" alt="PDE Festival">
+  <nav>
+    <button class="nav-btn active" data-view="elenco">Pratiche</button>
+    <button class="nav-btn" data-view="nuova">+ Nuova da mail</button>
+  </nav>
+  <div class="hdr-right">
+    <div class="theme-switch" role="group" aria-label="Tema">
+      <button class="theme-opt" data-set="dark" onclick="setTheme('dark')">Scuro</button>
+      <button class="theme-opt" data-set="light" onclick="setTheme('light')">Chiaro</button>
+    </div>
+    <span class="user-chip" id="user-chip"></span>
+    <button class="btn btn-sec btn-sm" id="logout-btn">Esci</button>
+  </div>
+</header>
+
+<main>
+  <div id="conn-banner"></div>
+
+  <!-- ═════════ ELENCO PRATICHE ═════════ -->
+  <section id="view-elenco">
+    <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <div class="toolbar">
+        <button class="chip active" data-filtro="aperte">Aperte</button>
+        <button class="chip" data-filtro="inevasi">Con inevasi</button>
+        <button class="chip" data-filtro="chiuse">Chiuse</button>
+        <button class="chip" data-filtro="tutte">Tutte</button>
+        <input type="text" id="cerca" placeholder="Cerca evento, cliente, numero…" style="max-width:320px;margin-left:auto;">
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Pratica</th><th>Evento</th><th>Cliente</th><th>Scad. ordine</th><th>Consegna</th>
+            <th class="num">Copie</th><th class="num">Inevaso aperto</th><th>Ordini</th><th>Stato</th>
+          </tr></thead>
+          <tbody id="elenco-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ NUOVA PRATICA DA MAIL ═════════ -->
+  <section id="view-nuova" class="hidden">
+    <div class="drop" id="drop">
+      <div class="big">✉️</div>
+      <b>Trascina qui la mail di Messaggerie</b>
+      <div class="muted" style="margin-top:6px;">File .msg (Outlook) o .eml, anche con allegati Excel/CSV con l'elenco titoli · oppure clicca per sceglierla</div>
+      <div class="muted" style="margin-top:4px;font-size:12px;">Da Outlook classico: trascina prima la mail sul desktop (o in una cartella), poi da lì in questo riquadro.</div>
+      <input type="file" id="file-mail" accept=".msg,.eml,.txt" class="hidden">
+    </div>
+    <div style="text-align:center;margin:10px 0 18px;">
+      <button class="btn btn-sec btn-sm" id="incolla-btn">…oppure incolla il testo della mail</button>
+    </div>
+    <div class="card hidden" id="incolla-card">
+      <div class="field"><label>Testo della mail</label><textarea id="incolla-testo" rows="8" placeholder="Incolla qui oggetto e testo della mail di Messaggerie"></textarea></div>
+      <button class="btn btn-primary" style="margin-top:10px;" id="incolla-leggi">Leggi testo</button>
+    </div>
+
+    <div id="nuova-form" class="hidden">
+      <div class="banner info" id="parse-esito"></div>
+
+      <div class="card">
+        <h2>1 · Evento e scadenze</h2>
+        <div class="row">
+          <div class="field lg"><label>Evento <span id="f-evento-ok"></span></label><input type="text" id="f-evento"></div>
+          <div class="field"><label>Luogo <span id="f-luogo-ok"></span></label><input type="text" id="f-luogo"></div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <div class="field sm"><label>Dal <span id="f-dal-ok"></span></label><input type="date" id="f-dal"></div>
+          <div class="field sm"><label>Al <span id="f-al-ok"></span></label><input type="date" id="f-al"></div>
+          <div class="field sm"><label>Scadenza ordine <span id="f-scad-ok"></span></label><input type="date" id="f-scad"></div>
+          <div class="field sm"><label>Consegna entro <span id="f-cons-ok"></span></label><input type="date" id="f-cons"></div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <div class="field"><label>Mittente Messaggerie</label><input type="text" id="f-mitt-nome"></div>
+          <div class="field"><label>Email per la risposta</label><input type="email" id="f-mitt-email"></div>
+          <div class="field lg"><label>Oggetto mail</label><input type="text" id="f-oggetto"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>2 · Cliente e destinazione</h2>
+        <div class="row">
+          <div class="field lg dropdown">
+            <label>Cliente (nome libreria o codice) <span id="f-cliente-ok"></span></label>
+            <input type="text" id="f-cliente-cerca" placeholder="Es. Coop Alleanza o 0001234567" autocomplete="off">
+            <div class="dd-list hidden" id="f-cliente-dd"></div>
+          </div>
+          <button class="btn btn-sec" id="f-cliente-btn">Cerca su Messaggerie</button>
+        </div>
+        <div id="f-cliente-sel" class="banner ok hidden" style="margin-top:10px;"></div>
+        <div class="row" style="margin-top:10px;">
+          <div class="field sm"><label>Tipo ordine</label>
+            <select id="f-doctype">
+              <option value="restock">Rifornimento</option>
+              <option value="deposit">Deposito Editore</option>
+              <option value="freeOrder">Omaggi</option>
+              <option value="specialOrder">Ordini Speciali</option>
+              <option value="specialOrderE">Ordini Speciali E</option>
+            </select>
+          </div>
+          <div class="field"><label>Riferimento ordine (vuoto = numero pratica)</label><input type="text" id="f-rif"></div>
+        </div>
+        <div style="margin-top:12px;">
+          <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="dest" value="cliente" checked> Consegna alla sede del cliente</label>
+          <label style="display:flex;gap:6px;align-items:center;margin-top:4px;"><input type="radio" name="dest" value="altra"> Altra destinazione (es. sede del festival)</label>
+        </div>
+        <div id="f-dest" class="hidden" style="margin-top:10px;">
+          <div class="row">
+            <div class="field lg"><label>Ragione sociale / presso</label><input type="text" id="d-nome"></div>
+            <div class="field lg"><label>Indirizzo</label><input type="text" id="d-indirizzo"></div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <div class="field sm"><label>CAP</label><input type="text" id="d-cap"></div>
+            <div class="field"><label>Località</label><input type="text" id="d-citta"></div>
+            <div class="field sm"><label>Provincia</label><input type="text" id="d-prov" maxlength="2"></div>
+            <div class="field"><label>Telefono</label><input type="text" id="d-tel"></div>
+            <div class="field"><label>Email</label><input type="text" id="d-email"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>3 · Titoli richiesti <span class="muted" id="f-titoli-cnt" style="font-size:13px;font-weight:400;"></span></h2>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>EAN</th><th>Titolo</th><th>Editore</th><th class="num">Copie</th><th></th></tr></thead>
+            <tbody id="f-titoli"></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-top:12px;align-items:flex-start;">
+          <div class="field lg"><label>Aggiungi titoli (uno per riga: EAN e copie)</label><textarea id="f-titoli-add" rows="3" placeholder="9788807035012 5&#10;9788817140102;10"></textarea></div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding-top:18px;">
+            <button class="btn btn-sec" id="f-titoli-add-btn">Aggiungi</button>
+            <button class="btn btn-sec" id="f-titoli-info-btn">Recupera titolo/editore</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="field"><label>Note</label><textarea id="f-note" rows="2"></textarea></div>
+        <div class="err" id="f-err" style="margin-top:8px;"></div>
+        <div class="row" style="margin-top:8px;">
+          <button class="btn btn-primary" id="f-crea">Crea pratica</button>
+          <button class="btn btn-ok" id="f-crea-invia">Crea pratica e invia ordine a Messaggerie</button>
+          <button class="btn btn-sec" id="f-annulla">Annulla</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ DETTAGLIO PRATICA ═════════ -->
+  <section id="view-pratica" class="hidden"></section>
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   CONFIG — stesso progetto Supabase "presenze" e stesse edge function di BookUp
+   ═══════════════════════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://tdflwenlylhctxssatax.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZmx3ZW5seWxoY3R4c3NhdGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMzgyNzYsImV4cCI6MjA5MTkxNDI3Nn0.l35qEL7LOvyYuI1McQlVqj4vbyTqmlevcmqWbTGYi2Q';
+const RPN_PROXY_BASE = `${SUPABASE_URL}/functions/v1/rpn-sync`;
+const RIF_ORDER_ID_BASE = `${SUPABASE_URL}/functions/v1/rifornimento-order-id`;
+const MSGREADER_URL = 'https://cdn.jsdelivr.net/npm/@kenjiuno/msgreader@1.28.0/+esm';
+const HUB_URL = 'https://albertospde.github.io/pde-hub/';
+const BOOKUP_URL = 'https://albertospde.github.io/prenota/';
+// Le due utenze Messaggerie usate per i rifornimenti (smistate in automatico per editore, come in BookUp)
+const RIF_ACCOUNT_IDS = ['pde', 'pde_service'];
+const ACCOUNT_LABEL = { pde: 'PDE', pde_service: 'PDE Service' };
+const DOCTYPE_LABEL = { restock: 'Rifornimento', deposit: 'Deposito Editore', freeOrder: 'Omaggi', specialOrder: 'Ordini Speciali', specialOrderE: 'Ordini Speciali E' };
+const STATO_LABEL = { nuova: 'Da ordinare', ordinata: 'Ordinata', in_recupero: 'Recupero inevasi', chiusa: 'Chiusa' };
+const RISTAMPA_LABEL = { '': '—', da_verificare: 'Da verificare', confermata: 'Confermata', non_prevista: 'Non prevista' };
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const state = {
+  me: null, rpn: null, meli: null,
+  pratiche: [], filtro: 'aperte', cerca: '',
+  nuova: null,          // bozza pratica in costruzione dalla mail
+  pr: null,             // pratica aperta: { p, righe, ordini, eventi, tab }
+};
+
+/* ═════════ UTILITÀ ═════════ */
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg, ms = 3500){
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), ms);
+}
+function fmtData(d){ if (!d) return '—'; const x = new Date(d.length === 10 ? d + 'T00:00:00' : d); return isNaN(x) ? '—' : x.toLocaleDateString('it-IT'); }
+function fmtDataOra(d){ if (!d) return '—'; const x = new Date(d); return x.toLocaleDateString('it-IT') + ' ' + x.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); }
+function n(v){ return Number(v) || 0; }
+function fmtN(v){ return (v === null || v === undefined || v === '') ? '—' : Number(v).toLocaleString('it-IT'); }
+function giorniA(d){ if (!d) return null; const oggi = new Date(); oggi.setHours(0,0,0,0); return Math.round((new Date(d + 'T00:00:00') - oggi) / 86400000); }
+function scadHtml(d, chiusa){
+  if (!d) return '<span class="muted">—</span>';
+  const g = giorniA(d);
+  if (chiusa) return fmtData(d);
+  const cls = g < 0 ? 'p-ko' : g <= 3 ? 'p-warn' : 'p-ok';
+  const txt = g < 0 ? `scaduta da ${-g} gg` : g === 0 ? 'oggi' : `tra ${g} gg`;
+  return `${fmtData(d)} <span class="pill ${cls}">${txt}</span>`;
+}
+function isoDate(y, m, d){
+  if (y < 100) y += 2000;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCMonth() !== m - 1) return null;
+  return dt.toISOString().slice(0, 10);
+}
+function normEan(s){ const d = String(s ?? '').replace(/\D/g, ''); return /^97[89]\d{10}$/.test(d) ? d : (/^\d{13}$/.test(d) ? d : ''); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function token(){
+  const { data: { session } } = await sb.auth.getSession();
+  return session ? session.access_token : SUPABASE_KEY;
+}
+// Stesso proxy di BookUp verso RPN / Messaggerie
+async function rpnApi(path, options = {}){
+  const res = await fetch(`${RPN_PROXY_BASE}/${path}`, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${await token()}`, 'Content-Type': 'application/json', ...(options.headers || {}) },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.message || data.error || `Errore ${res.status}`);
+    err.status = res.status; err.payload = data; throw err;
+  }
+  return data;
+}
+async function orderIdApi(items){
+  const res = await fetch(RIF_ORDER_ID_BASE, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${await token()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Errore ${res.status}`);
+  return data.results || [];
+}
+async function logEvento(praticaId, azione, dettaglio){
+  const { data: { user } } = await sb.auth.getUser();
+  await sb.from('ff_eventi').insert({ pratica_id: praticaId, user_id: user.id, azione, dettaglio: dettaglio || null });
+}
+
+/* ═════════ ACCESSO ═════════ */
+async function avvia(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('login').classList.remove('hidden'); return; }
+  const role = session.user?.user_metadata?.role || '';
+  if (role === 'agente') {
+    document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;">
+      <div><div style="font-size:48px;margin-bottom:16px;">🔒</div><h2 style="margin-bottom:8px;">Accesso non autorizzato</h2>
+      <p class="muted" style="margin-bottom:24px;">Non hai i permessi per accedere a questa applicazione.</p>
+      <a class="btn btn-primary" href="${HUB_URL}">← Torna a PDE Hub</a></div></div>`;
+    return;
+  }
+  $('login').classList.add('hidden');
+  state.me = session.user;
+  $('user-chip').textContent = session.user.email;
+  verificaConnessioni();
+  await caricaElenco();
+  const id = new URLSearchParams(location.hash.slice(1)).get('pratica');
+  if (id) apriPratica(Number(id));
+}
+$('login-btn').onclick = async () => {
+  const email = $('login-email').value.trim(), password = $('login-pw').value;
+  $('login-err').textContent = '';
+  if (!email || !password) { $('login-err').textContent = 'Inserisci email e password.'; return; }
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { $('login-err').textContent = 'Credenziali non valide.'; return; }
+  avvia();
+};
+$('login-pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('login-btn').click(); });
+// Logout solo locale: non disconnette Hub e altre app PDE che condividono la sessione
+$('logout-btn').onclick = async () => { await sb.auth.signOut({ scope: 'local' }); location.reload(); };
+
+// Inviare ordini richiede l'accesso RPN amministratore; leggere titoli ed evasione
+// l'account Messaggerie personale: si collegano entrambi in BookUp → Accessi.
+async function verificaConnessioni(){
+  const [rpn, meli] = await Promise.all([
+    rpnApi('connect-status').catch(() => ({ connected: false })),
+    rpnApi('meli-connect-status').catch(() => ({ connected: false })),
+  ]);
+  state.rpn = rpn; state.meli = meli;
+  const msg = [];
+  if (!rpn.connected || rpn.role !== 'amministratore') msg.push('<b>accesso RPN amministratore</b> (serve per inviare gli ordini a Messaggerie)');
+  if (!meli.connected) msg.push('<b>account Messaggerie Libri</b> (serve per leggere titoli, evaso e inevaso)');
+  $('conn-banner').innerHTML = msg.length
+    ? `<div class="banner warn">⚠️ Manca il collegamento: ${msg.join(' e ')}. Collegali in <a href="${BOOKUP_URL}" target="_blank" rel="noopener">BookUp</a> → 🔑 Accessi, poi ricarica questa pagina.</div>`
+    : '';
+}
+function puoInviare(){ return state.rpn?.connected && state.rpn?.role === 'amministratore'; }
+
+/* ═════════ NAVIGAZIONE ═════════ */
+function mostra(view){
+  ['elenco', 'nuova', 'pratica'].forEach(v => $('view-' + v).classList.toggle('hidden', v !== view));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  if (view !== 'pratica') history.replaceState(null, '', location.pathname + location.search);
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('.nav-btn').forEach(b => b.onclick = () => {
+  mostra(b.dataset.view);
+  if (b.dataset.view === 'elenco') caricaElenco();
+});
+
+/* ═════════ ELENCO PRATICHE ═════════ */
+async function caricaElenco(){
+  const [{ data: pr, error }, { data: righe }, { data: ordini }] = await Promise.all([
+    sb.from('ff_pratiche').select('id,numero,stato,evento,luogo,cliente_nome,cliente_codice,scadenza_ordine,scadenza_consegna,created_at').order('created_at', { ascending: false }),
+    sb.from('ff_righe').select('pratica_id,qta_richiesta,qta_inevasa'),
+    sb.from('ff_ordini').select('pratica_id,tipo,numero_interno'),
+  ]);
+  if (error) { $('elenco-body').innerHTML = `<tr><td colspan="9" class="err">Errore: ${esc(error.message)}</td></tr>`; return; }
+  const agg = {};
+  (righe || []).forEach(r => { const a = agg[r.pratica_id] ||= { copie: 0, inevaso: 0, ordini: [] }; a.copie += n(r.qta_richiesta); a.inevaso += n(r.qta_inevasa); });
+  (ordini || []).forEach(o => { (agg[o.pratica_id] ||= { copie: 0, inevaso: 0, ordini: [] }).ordini.push(o); });
+  state.pratiche = (pr || []).map(p => ({ ...p, ...(agg[p.id] || { copie: 0, inevaso: 0, ordini: [] }) }));
+  renderElenco();
+}
+function renderElenco(){
+  const aperte = state.pratiche.filter(p => p.stato !== 'chiusa');
+  const daOrdinare = aperte.filter(p => p.stato === 'nuova');
+  const inScadenza = aperte.filter(p => p.stato === 'nuova' && p.scadenza_ordine && giorniA(p.scadenza_ordine) <= 3);
+  const conInevasi = aperte.filter(p => p.inevaso > 0);
+  $('kpis').innerHTML = `
+    <div class="kpi"><div class="n">${aperte.length}</div><div class="l">Pratiche aperte</div></div>
+    <div class="kpi ${daOrdinare.length ? 'warn' : 'ok'}"><div class="n">${daOrdinare.length}</div><div class="l">Ordini ancora da inserire</div></div>
+    <div class="kpi ${inScadenza.length ? 'ko' : 'ok'}"><div class="n">${inScadenza.length}</div><div class="l">Scadenza ordine entro 3 giorni</div></div>
+    <div class="kpi ${conInevasi.length ? 'warn' : 'ok'}"><div class="n">${conInevasi.reduce((s, p) => s + p.inevaso, 0)}</div><div class="l">Copie inevase da recuperare (${conInevasi.length} pratiche)</div></div>`;
+  const q = state.cerca.toLowerCase();
+  const lista = state.pratiche.filter(p => {
+    if (state.filtro === 'aperte' && p.stato === 'chiusa') return false;
+    if (state.filtro === 'chiuse' && p.stato !== 'chiusa') return false;
+    if (state.filtro === 'inevasi' && !(p.inevaso > 0 && p.stato !== 'chiusa')) return false;
+    if (q && ![p.numero, p.evento, p.luogo, p.cliente_nome, p.cliente_codice].some(x => String(x || '').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  $('elenco-body').innerHTML = lista.length ? lista.map(p => `
+    <tr class="click" onclick="apriPratica(${p.id})">
+      <td class="mono">${esc(p.numero)}</td>
+      <td><b>${esc(p.evento)}</b>${p.luogo ? `<div class="muted" style="font-size:12px;">${esc(p.luogo)}</div>` : ''}</td>
+      <td>${esc(p.cliente_nome || '')}${p.cliente_codice ? `<div class="muted mono" style="font-size:11px;">${esc(p.cliente_codice)}</div>` : ''}</td>
+      <td>${p.stato === 'nuova' ? scadHtml(p.scadenza_ordine) : fmtData(p.scadenza_ordine)}</td>
+      <td>${scadHtml(p.scadenza_consegna, p.stato === 'chiusa')}</td>
+      <td class="num">${fmtN(p.copie)}</td>
+      <td class="num">${p.inevaso ? `<span class="pill p-warn">${fmtN(p.inevaso)}</span>` : '—'}</td>
+      <td class="mono" style="font-size:12px;">${p.ordini.map(o => esc(o.numero_interno || '…')).join(', ') || '—'}</td>
+      <td><span class="pill p-${p.stato}">${STATO_LABEL[p.stato]}</span></td>
+    </tr>`).join('') : `<tr><td colspan="9" class="empty">Nessuna pratica. Usa <b>+ Nuova da mail</b> e trascina la mail di Messaggerie.</td></tr>`;
+}
+document.querySelectorAll('[data-filtro]').forEach(c => c.onclick = () => {
+  state.filtro = c.dataset.filtro;
+  document.querySelectorAll('[data-filtro]').forEach(x => x.classList.toggle('active', x === c));
+  renderElenco();
+});
+$('cerca').oninput = e => { state.cerca = e.target.value; renderElenco(); };
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LETTURA MAIL (.eml / .msg / testo) ED ESTRAZIONE PARAMETRI
+   ═══════════════════════════════════════════════════════════════════════ */
+function decodeBytes(bytes, charset){
+  try { return new TextDecoder((charset || 'utf-8').toLowerCase().replace(/^(us-ascii|ascii)$/, 'utf-8')).decode(bytes); }
+  catch (_e) { return new TextDecoder('utf-8').decode(bytes); }
+}
+function b64ToBytes(s){ const bin = atob(s.replace(/[^A-Za-z0-9+/=]/g, '')); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+function qpToBytes(s){
+  s = s.replace(/=\r?\n/g, '');
+  const out = [];
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '=' && /^[0-9A-Fa-f]{2}$/.test(s.substr(i + 1, 2))) { out.push(parseInt(s.substr(i + 1, 2), 16)); i += 2; }
+    else out.push(s.charCodeAt(i) & 0xff);
+  }
+  return new Uint8Array(out);
+}
+// Intestazioni con parole codificate (=?utf-8?B?...?= / =?utf-8?Q?...?=)
+function decodeWords(s){
+  return String(s || '').replace(/\?=\s+=\?/g, '?==?').replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (_m, cs, enc, txt) => {
+    const bytes = enc.toUpperCase() === 'B' ? b64ToBytes(txt) : qpToBytes(txt.replace(/_/g, ' '));
+    return decodeBytes(bytes, cs);
+  });
+}
+function parseHeaders(raw){
+  const h = {};
+  raw.replace(/\r?\n[ \t]+/g, ' ').split(/\r?\n/).forEach(line => {
+    const i = line.indexOf(':'); if (i > 0) { const k = line.slice(0, i).trim().toLowerCase(); if (!(k in h)) h[k] = line.slice(i + 1).trim(); }
+  });
+  return h;
+}
+function headerParam(v, name){ const m = String(v || '').match(new RegExp(name + '\\*?=\\s*"?([^";]+)"?', 'i')); return m ? decodeWords(m[1]) : ''; }
+function htmlToText(html){
+  const doc = new DOMParser().parseFromString(
+    String(html).replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|tr|li|h\d)>/gi, '\n').replace(/<\/t[dh]>/gi, '\t'), 'text/html');
+  doc.querySelectorAll('style,script').forEach(x => x.remove());
+  return (doc.body?.textContent || '').replace(/ /g, ' ').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+// .eml: parser MIME minimo (multipart annidati, base64, quoted-printable, charset)
+function parseEml(text){
+  const mail = { subject: '', fromName: '', fromEmail: '', date: null, text: '', html: '', attachments: [] };
+  function part(raw){
+    const sep = raw.search(/\r?\n\r?\n/);
+    const head = parseHeaders(sep >= 0 ? raw.slice(0, sep) : raw);
+    const body = sep >= 0 ? raw.slice(sep).replace(/^\r?\n\r?\n/, '') : '';
+    return { head, body };
+  }
+  function walk(raw, top){
+    const { head, body } = part(raw);
+    if (top) {
+      mail.subject = decodeWords(head['subject'] || '');
+      const from = decodeWords(head['from'] || '');
+      const m = from.match(/^\s*"?([^"<]*)"?\s*<([^>]+)>/);
+      mail.fromName = m ? m[1].trim() : ''; mail.fromEmail = m ? m[2].trim() : from.trim();
+      mail.date = head['date'] ? new Date(head['date']) : null;
+    }
+    const ct = head['content-type'] || 'text/plain';
+    const boundary = headerParam(ct, 'boundary');
+    if (/^multipart\//i.test(ct) && boundary) {
+      body.split('--' + boundary).slice(1).forEach(p => { if (!/^--/.test(p)) walk(p.replace(/^\r?\n/, ''), false); });
+      return;
+    }
+    const enc = (head['content-transfer-encoding'] || '').toLowerCase();
+    const bytes = enc === 'base64' ? b64ToBytes(body) : enc === 'quoted-printable' ? qpToBytes(body) : Uint8Array.from(body, c => c.charCodeAt(0) & 0xff);
+    const disp = head['content-disposition'] || '';
+    const fname = headerParam(disp, 'filename') || headerParam(ct, 'name');
+    if (fname || /attachment/i.test(disp)) { mail.attachments.push({ name: fname || 'allegato', bytes }); return; }
+    if (/^message\/rfc822/i.test(ct)) { walk(decodeBytes(bytes), false); return; }
+    const txt = decodeBytes(bytes, headerParam(ct, 'charset'));
+    if (/text\/html/i.test(ct)) mail.html += txt; else if (/text\//i.test(ct)) mail.text += txt;
+  }
+  walk(text, true);
+  if (!mail.text.trim() && mail.html) mail.text = htmlToText(mail.html);
+  return mail;
+}
+// .msg (Outlook): libreria msgreader caricata solo quando serve
+async function parseMsg(buffer){
+  const mod = await import(MSGREADER_URL);
+  const MsgReader = mod.default?.default || mod.default || mod.MsgReader;
+  const reader = new MsgReader(buffer);
+  const d = reader.getFileData();
+  const mail = {
+    subject: d.subject || '', fromName: d.senderName || '',
+    fromEmail: d.senderSmtpAddress || d.senderEmail || '',
+    date: d.messageDeliveryTime ? new Date(d.messageDeliveryTime) : (d.clientSubmitTime ? new Date(d.clientSubmitTime) : null),
+    text: d.body || '', html: '', attachments: [],
+  };
+  if (!mail.text && d.bodyHtml) mail.text = htmlToText(d.bodyHtml);
+  if (!mail.text && d.html) mail.text = htmlToText(new TextDecoder().decode(d.html));
+  (d.attachments || []).forEach(a => {
+    try { const att = reader.getAttachment(a); mail.attachments.push({ name: att.fileName || a.fileName || 'allegato', bytes: att.content }); } catch (_e) {}
+  });
+  return mail;
+}
+function parseTestoIncollato(text){
+  const m = text.match(/^\s*(?:oggetto|subject)\s*:\s*(.+)$/im);
+  const f = text.match(/^\s*(?:da|from)\s*:\s*(.+)$/im);
+  const fm = f ? f[1].match(/([^<]*)<([^>]+)>/) : null;
+  return { subject: m ? m[1].trim() : '', fromName: fm ? fm[1].replace(/"/g, '').trim() : '', fromEmail: fm ? fm[2].trim() : (f ? (f[1].match(/[\w.+-]+@[\w.-]+/) || [''])[0] : ''), date: null, text, attachments: [] };
+}
+
+const MESI = { gennaio: 1, febbraio: 2, marzo: 3, aprile: 4, maggio: 5, giugno: 6, luglio: 7, agosto: 8, settembre: 9, ottobre: 10, novembre: 11, dicembre: 12,
+  gen: 1, feb: 2, mar: 3, apr: 4, mag: 5, giu: 6, lug: 7, ago: 8, set: 9, ott: 10, nov: 11, dic: 12 };
+const RE_MESE = 'gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic';
+function annoDefault(m, d){
+  const oggi = new Date(); let y = oggi.getFullYear();
+  const cand = new Date(y, m - 1, d);
+  if (cand < new Date(oggi.getFullYear(), oggi.getMonth() - 2, 1)) y++;   // mese già passato da un pezzo → anno prossimo
+  return y;
+}
+// Tutte le date del testo con posizione: 12/10/2026, 12.10.26, 12 ottobre (2026), "dal 10 al 12 ottobre"
+function trovaDate(text){
+  const out = [];
+  const reNum = /\b(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?\b/g;
+  let m;
+  while ((m = reNum.exec(text))) {
+    const d = +m[1], mo = +m[2]; if (d < 1 || d > 31 || mo < 1 || mo > 12) continue;
+    if (!m[3] && !/[\/]/.test(m[0])) continue;  // "12.10" senza anno è troppo ambiguo
+    const iso = isoDate(m[3] ? +m[3] : annoDefault(mo, d), mo, d);
+    if (iso) out.push({ iso, idx: m.index, len: m[0].length });
+  }
+  const reRange = new RegExp(`\\bdal(?:l['’]\\s*|\\s+)(\\d{1,2})°?\\s+al(?:l['’]\\s*|\\s+)(\\d{1,2})°?\\s+(${RE_MESE})\\w*\\s*(\\d{4})?`, 'gi');
+  while ((m = reRange.exec(text))) {
+    const mo = MESI[m[3].toLowerCase()]; const y = m[4] ? +m[4] : annoDefault(mo, +m[2]);
+    out.push({ iso: isoDate(y, mo, +m[1]), idx: m.index, len: 1, range: 'dal' });
+    out.push({ iso: isoDate(y, mo, +m[2]), idx: m.index + 1, len: m[0].length - 1, range: 'al' });
+  }
+  const reTxt = new RegExp(`\\b(\\d{1,2})°?\\s+(${RE_MESE})\\w*\\.?(?:\\s+(\\d{4}))?`, 'gi');
+  while ((m = reTxt.exec(text))) {
+    if (out.some(o => m.index >= o.idx && m.index < o.idx + o.len)) continue;
+    const mo = MESI[m[2].toLowerCase()]; if (!mo) continue;
+    const iso = isoDate(m[3] ? +m[3] : annoDefault(mo, +m[1]), mo, +m[1]);
+    if (iso) out.push({ iso, idx: m.index, len: m[0].length });
+  }
+  return out.filter(o => o.iso).sort((a, b) => a.idx - b.idx);
+}
+function estraiParametri(mail){
+  const subj = (mail.subject || '').replace(/^\s*((r|re|i|fw|fwd|inoltro|rif)\s*:\s*)+/i, '').trim();
+  const testo = (mail.text || '').replace(/\r/g, '');
+  const tutto = subj + '\n' + testo;
+  const p = { evento: '', luogo: '', dal: '', al: '', scad: '', cons: '', clienteNome: '', clienteCodice: '', rif: '' };
+
+  // Evento: prima nell'oggetto, poi nel testo
+  const reEv = /((?:festival|fiera|salone|rassegna|mostra[- ]mercato|book\s?pride|pi[uù] libri pi[uù] liberi|tempo di libri|pordenonelegge|festivaletteratura|passaparola|libri come|bookcity|lucca comics)[^\n.;:()]{0,60})/i;
+  const ev = subj.match(reEv) || testo.match(reEv);
+  p.evento = (ev ? ev[1] : subj).split(/\s[-–|]\s/)[0].replace(/\s+/g, ' ').replace(/\s*[-–,]\s*$/, '').trim();
+
+  const lab = (re) => { const m = tutto.match(re); return m ? m[1].replace(/\s+/g, ' ').trim() : ''; };
+  p.luogo = lab(/(?:luogo|sede|location|presso)\s*[:\-]\s*([^\n.;]{3,60})/i)
+    || lab(/(?:si terr[àa]|si svolger[àa]|in programma|avr[àa] luogo)[^\n.]*?\s(?:a|ad|presso)\s+((?:[A-ZÀ-Ý][\wà-ÿ']+)(?:\s+(?:di|del|della|sul|in)?\s*[A-ZÀ-Ý][\wà-ÿ']+){0,3})/);
+  p.clienteCodice = lab(/cod(?:ice)?\.?\s*(?:cliente|cli\.?)\s*[:\-n°.]*\s*(\d{4,10})/i);
+  p.clienteNome = lab(/(?:cliente|libreria|punto vendita)\s*[:\-]\s*([^\n;]{3,80})/i);
+  if (!p.clienteNome) { const c = tutto.match(/\b((?:coop|librerie?\s+coop|ipercoop|feltrinelli|mondadori|giunti|ubik|librerie\.coop)[^\n,;.]{0,40})/i); if (c) p.clienteNome = c[1].trim(); }
+  p.rif = lab(/(?:riferimento|rif\.?)\s*(?:ordine)?\s*[:\-]\s*([^\n;]{2,40})/i);
+
+  // Date: la parola chiave nelle ~70 battute precedenti decide il significato
+  const date = trovaDate(tutto);
+  date.forEach(d => {
+    const ctx = tutto.slice(Math.max(0, d.idx - 70), d.idx).toLowerCase();
+    if (d.range === 'dal') { if (!p.dal) p.dal = d.iso; return; }
+    if (d.range === 'al') { if (!p.al) p.al = d.iso; return; }
+    if (/(ordin|inserir|inserimento|caricar|entro e non oltre|scadenza)[^\n]*$/.test(ctx) && !/consegn|arriv|recapit/.test(ctx.slice(-40)) && !p.scad) p.scad = d.iso;
+    else if (/(consegn|arriv|recapit|spedi|merce)[^\n]*$/.test(ctx) && !p.cons) p.cons = d.iso;
+    else if (/\bdal\s*$|\bdal\s+\w*\s*$/.test(ctx) && !p.dal) p.dal = d.iso;
+    else if (/\bal\s*$/.test(ctx) && p.dal && !p.al) p.al = d.iso;
+    else if (/(festival|fiera|evento|manifestazione|si svolger|si terr|giorn)/.test(ctx) && !p.dal) p.dal = d.iso;
+  });
+  if (p.dal && !p.al) p.al = p.dal;
+  return p;
+}
+// Titoli dal testo: righe con un EAN13 e (se c'è) una quantità
+function titoliDaTesto(text){
+  const out = [];
+  String(text || '').split(/\r?\n/).forEach(line => {
+    const m = line.match(/(?<!\d)(97[89](?:[\s\-]?\d){10})(?!\d)/);
+    if (!m) return;
+    const ean = normEan(m[1]);
+    const resto = (line.slice(0, m.index) + ' ' + line.slice(m.index + m[0].length));
+    let q = resto.match(/(\d{1,4})\s*(?:copie|cop\.?|cp\.?|pz\.?|pezzi|esemplari|ex\.?)\b/i)
+         || resto.match(/(?:copie|cop\.?|qt[aà]\.?|quantit[aà]|pz\.?|n\.)\s*[:=]?\s*(\d{1,4})\b/i)
+         || resto.match(/\bx\s*(\d{1,4})\b/i);
+    if (!q) { const nums = [...resto.matchAll(/(?<![\d,.€])(\d{1,4})(?![\d,.]|\s*€|\s*%)/g)]; if (nums.length) q = nums[nums.length - 1]; }
+    const titolo = (q ? resto.slice(0, q.index) + resto.slice(q.index + q[0].length) : resto)
+      .replace(/[\t;|]+/g, ' ').replace(/\s{2,}/g, ' ').replace(/^[\s\-–:,.]+|[\s\-–:,.]+$/g, '').trim();
+    out.push({ ean, qta: q ? +q[1] : 1, titolo: titolo.length > 3 && titolo.length < 120 ? titolo : '', qtaIncerta: !q });
+  });
+  return out;
+}
+// Titoli dagli allegati Excel/CSV: colonna EAN + colonna copie (per intestazione o per contenuto)
+function titoliDaFoglio(bytes){
+  const wb = XLSX.read(bytes, { type: 'array' });
+  const out = [];
+  wb.SheetNames.forEach(sn => {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: false, defval: '' });
+    if (!rows.length) return;
+    let hRow = rows.findIndex(r => r.some(c => /\b(ean|isbn|codice)\b/i.test(String(c))));
+    const head = hRow >= 0 ? rows[hRow].map(c => String(c).toLowerCase()) : [];
+    const ncol = Math.max(...rows.map(r => r.length));
+    let cEan = head.findIndex(c => /\b(ean|isbn)\b/.test(c));
+    if (cEan < 0) {
+      let best = -1, bestN = 0;
+      for (let c = 0; c < ncol; c++) { const k = rows.filter(r => normEan(r[c])).length; if (k > bestN) { bestN = k; best = c; } }
+      cEan = best;
+    }
+    if (cEan < 0) return;
+    let cQta = head.findIndex((c, i) => i !== cEan && /(cop|q\.?t|quant|pz|pezz|ordin|richiest)/.test(c));
+    const cTit = head.findIndex(c => /titolo/.test(c));
+    const cEd = head.findIndex(c => /editore|marchio/.test(c));
+    if (cQta < 0) {
+      for (let c = 0; c < ncol; c++) {
+        if (c === cEan) continue;
+        const vals = rows.filter(r => normEan(r[cEan])).map(r => String(r[c]).trim());
+        if (vals.length && vals.every(v => /^\d{1,4}$/.test(v))) { cQta = c; break; }
+      }
+    }
+    rows.slice(hRow + 1).forEach(r => {
+      const ean = normEan(r[cEan]); if (!ean) return;
+      const q = cQta >= 0 ? parseInt(String(r[cQta]).replace(/\D/g, ''), 10) : NaN;
+      out.push({ ean, qta: q > 0 ? q : 1, titolo: cTit >= 0 ? String(r[cTit]).trim() : '', editore: cEd >= 0 ? String(r[cEd]).trim() : '', qtaIncerta: !(q > 0) });
+    });
+  });
+  return out;
+}
+function unisciTitoli(list){
+  const map = new Map();
+  list.forEach(t => {
+    const x = map.get(t.ean);
+    if (x) { x.qta += t.qta; x.titolo ||= t.titolo; x.editore ||= t.editore; x.qtaIncerta = x.qtaIncerta && t.qtaIncerta; }
+    else map.set(t.ean, { ean: t.ean, qta: t.qta, titolo: t.titolo || '', editore: t.editore || '', autore: '', qtaIncerta: !!t.qtaIncerta });
+  });
+  return [...map.values()];
+}
+
+/* ═════════ NUOVA PRATICA ═════════ */
+const drop = $('drop');
+drop.onclick = () => $('file-mail').click();
+$('file-mail').onchange = e => { if (e.target.files[0]) leggiFile(e.target.files[0]); e.target.value = ''; };
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => {
+  const f = e.dataTransfer.files[0];
+  if (f) { leggiFile(f); return; }
+  const t = e.dataTransfer.getData('text/plain');
+  if (t) caricaMail(parseTestoIncollato(t), 'testo trascinato');
+  else toast('Nessun file ricevuto: da Outlook classico trascina prima la mail sul desktop, poi qui.', 6000);
+});
+$('incolla-btn').onclick = () => $('incolla-card').classList.toggle('hidden');
+$('incolla-leggi').onclick = () => { const t = $('incolla-testo').value.trim(); if (t) caricaMail(parseTestoIncollato(t), 'testo incollato'); };
+
+async function leggiFile(file){
+  try {
+    const buf = await file.arrayBuffer();
+    const nome = file.name || '';
+    let mail;
+    if (/\.msg$/i.test(nome)) mail = await parseMsg(buf);
+    else mail = parseEml(new TextDecoder('latin1').decode(new Uint8Array(buf)));
+    caricaMail(mail, nome);
+  } catch (e) {
+    console.error(e);
+    toast('Impossibile leggere la mail: ' + e.message, 6000);
+  }
+}
+function caricaMail(mail, nomeFile){
+  const p = estraiParametri(mail);
+  let daFogli = [];
+  const fogli = [];
+  (mail.attachments || []).forEach(a => {
+    if (/\.(xlsx|xlsm|xls|csv)$/i.test(a.name)) {
+      try { const t = titoliDaFoglio(a.bytes); daFogli = daFogli.concat(t); fogli.push(`${a.name} (${t.length} righe)`); }
+      catch (e) { fogli.push(`${a.name} (non leggibile)`); }
+    }
+  });
+  // L'allegato è la fonte principale; dal testo si prendono solo i titoli che l'allegato non ha
+  // (spesso il testo ripete in sintesi i titoli dell'allegato: sommarli raddoppierebbe le copie)
+  daFogli = unisciTitoli(daFogli);
+  const inFogli = new Set(daFogli.map(t => t.ean));
+  const titoli = daFogli.concat(unisciTitoli(titoliDaTesto(mail.text)).filter(t => !inFogli.has(t.ean)));
+  state.nuova = { mail, nomeFile, titoli, cliente: null };
+
+  $('f-evento').value = p.evento; $('f-luogo').value = p.luogo;
+  $('f-dal').value = p.dal; $('f-al').value = p.al; $('f-scad').value = p.scad; $('f-cons').value = p.cons;
+  $('f-mitt-nome').value = mail.fromName || ''; $('f-mitt-email').value = mail.fromEmail || '';
+  $('f-oggetto').value = mail.subject || ''; $('f-rif').value = p.rif; $('f-note').value = '';
+  $('f-cliente-cerca').value = p.clienteCodice || p.clienteNome || '';
+  $('f-cliente-sel').classList.add('hidden');
+  const ok = (id, v) => { $(id).innerHTML = v ? '<span class="found">dalla mail</span>' : ''; };
+  ok('f-evento-ok', p.evento); ok('f-luogo-ok', p.luogo); ok('f-dal-ok', p.dal); ok('f-al-ok', p.al);
+  ok('f-scad-ok', p.scad); ok('f-cons-ok', p.cons); ok('f-cliente-ok', p.clienteCodice || p.clienteNome);
+
+  const trovati = [p.evento && 'evento', p.luogo && 'luogo', p.dal && 'date evento', p.scad && 'scadenza ordine', p.cons && 'consegna', (p.clienteCodice || p.clienteNome) && 'cliente'].filter(Boolean);
+  $('parse-esito').innerHTML = `📨 <b>${esc(mail.subject || nomeFile)}</b>${mail.fromEmail ? ' — da ' + esc(mail.fromName || mail.fromEmail) : ''}<br>
+    Trovati: ${trovati.length ? trovati.join(', ') : 'nessun parametro riconosciuto'} · <b>${titoli.length}</b> titoli (${titoli.reduce((s, t) => s + t.qta, 0)} copie)
+    ${fogli.length ? '<br>Allegati letti: ' + esc(fogli.join(', ')) : ''}
+    <br><span class="muted">Controlla e completa i campi qui sotto prima di creare la pratica.</span>`;
+  $('nuova-form').classList.remove('hidden');
+  renderTitoliNuova();
+  if (p.clienteCodice) cercaCliente(p.clienteCodice);
+  $('nuova-form').scrollIntoView({ behavior: 'smooth' });
+}
+function renderTitoliNuova(){
+  const t = state.nuova?.titoli || [];
+  $('f-titoli-cnt').textContent = t.length ? `${t.length} titoli · ${t.reduce((s, x) => s + n(x.qta), 0)} copie` : '';
+  $('f-titoli').innerHTML = t.length ? t.map((x, i) => `
+    <tr>
+      <td class="mono">${esc(x.ean)}</td>
+      <td>${esc(x.titolo || '')}${x.info === 'non_trovato' ? ' <span class="pill p-ko">non trovato</span>' : ''}</td>
+      <td>${esc(x.editore || '')}</td>
+      <td class="num"><input type="number" min="1" value="${x.qta}" onchange="state.nuova.titoli[${i}].qta=Math.max(1,+this.value||1);state.nuova.titoli[${i}].qtaIncerta=false;renderTitoliNuova()">
+        ${x.qtaIncerta ? '<span class="pill p-warn" title="Quantità non indicata nella mail">?</span>' : ''}</td>
+      <td><button class="btn btn-sec btn-sm" onclick="state.nuova.titoli.splice(${i},1);renderTitoliNuova()">✕</button></td>
+    </tr>`).join('') : '<tr><td colspan="5" class="empty">Nessun titolo trovato nella mail: aggiungili qui sotto.</td></tr>';
+}
+$('f-titoli-add-btn').onclick = () => {
+  if (!state.nuova) state.nuova = { mail: {}, titoli: [] };
+  const nuovi = titoliDaTesto($('f-titoli-add').value);
+  if (!nuovi.length) { toast('Nessun EAN valido trovato.'); return; }
+  state.nuova.titoli = unisciTitoli(state.nuova.titoli.concat(nuovi));
+  $('f-titoli-add').value = '';
+  renderTitoliNuova();
+};
+$('f-titoli-info-btn').onclick = async () => {
+  const t = state.nuova?.titoli || [];
+  if (!state.meli?.connected) { toast('Collega prima l\'account Messaggerie in BookUp → Accessi.', 5000); return; }
+  const btn = $('f-titoli-info-btn'); btn.disabled = true;
+  let i = 0;
+  await mapConcorrenza(t, 6, async x => {
+    const info = await infoTitolo(x.ean);
+    if (info) { x.titolo = info.title || x.titolo; x.editore = info.publisher || x.editore; x.autore = info.author || ''; x.info = 'ok'; }
+    else x.info = 'non_trovato';
+    btn.textContent = `Recupero… ${++i}/${t.length}`;
+  });
+  btn.disabled = false; btn.textContent = 'Recupera titolo/editore';
+  renderTitoliNuova();
+};
+document.querySelectorAll('input[name=dest]').forEach(r => r.onchange = () => $('f-dest').classList.toggle('hidden', r.value !== 'altra' || !r.checked));
+
+// Ricerca cliente su entrambe le utenze Messaggerie (come BookUp)
+let _cercaTok = 0;
+async function cercaCliente(raw){
+  raw = (raw || '').trim();
+  const dd = $('f-cliente-dd');
+  if (!raw) return;
+  if (/^\d+$/.test(raw)) { dd.classList.add('hidden'); return selezionaCliente(raw); }
+  const tok = ++_cercaTok;
+  dd.innerHTML = '<div class="dd-item muted">Ricerca in corso…</div>'; dd.classList.remove('hidden');
+  const res = await Promise.all(RIF_ACCOUNT_IDS.map(account =>
+    rpnApi(`rifornimento-clienti-search?${new URLSearchParams({ account, customerName: raw })}`).then(d => d.clienti || []).catch(() => [])));
+  if (tok !== _cercaTok) return;
+  const seen = new Set(); const clienti = [];
+  res.flat().forEach(c => { const k = String(c.code || ''); if (k && !seen.has(k)) { seen.add(k); clienti.push(c); } });
+  dd.innerHTML = clienti.length ? clienti.slice(0, 20).map(c => `
+    <div class="dd-item" data-code="${esc(c.code)}">${esc(c.name || '')}<div class="sub">${esc(c.code)} — ${esc(c.city || '')}</div></div>`).join('')
+    : `<div class="dd-item muted">${puoInviare() ? 'Nessun cliente trovato.' : 'Ricerca non disponibile: serve l\'accesso RPN amministratore.'}</div>`;
+  dd.querySelectorAll('[data-code]').forEach(el => el.onclick = () => { dd.classList.add('hidden'); selezionaCliente(el.dataset.code); });
+}
+$('f-cliente-btn').onclick = () => cercaCliente($('f-cliente-cerca').value);
+$('f-cliente-cerca').addEventListener('keydown', e => { if (e.key === 'Enter') cercaCliente(e.target.value); });
+document.addEventListener('click', e => { if (!e.target.closest('.dropdown')) $('f-cliente-dd').classList.add('hidden'); });
+async function selezionaCliente(code){
+  const box = $('f-cliente-sel');
+  box.classList.remove('hidden'); box.className = 'banner info'; box.textContent = 'Verifica cliente su Messaggerie…';
+  let data = null, account = null, lastErr = null;
+  for (const a of RIF_ACCOUNT_IDS) {
+    try { data = await rpnApi(`rifornimento-cliente?account=${a}&customerCode=${encodeURIComponent(code)}`); account = a; break; }
+    catch (e) { lastErr = e; }
+  }
+  if (!data) {
+    // Senza accesso RPN il codice resta comunque salvato: l'ordine si invierà dopo
+    state.nuova.cliente = { code, name: '', account: null };
+    box.className = 'banner warn';
+    box.innerHTML = `Cliente <b>${esc(code)}</b> non verificato (${esc(lastErr?.message || 'errore')}). Puoi creare comunque la pratica.`;
+    return;
+  }
+  const c = data.cliente || {};
+  const nome = c.businessName || c.name || c.description || '';
+  const indirizzo = [c.address, c.postalCode || c.zipCode || c.cap, c.city, c.province].filter(Boolean).join(', ');
+  state.nuova.cliente = { code, name: nome, account, indirizzo };
+  $('f-cliente-cerca').value = nome ? `${nome} (${code})` : code;
+  box.className = 'banner ok';
+  box.innerHTML = `✓ <b>${esc(nome || code)}</b> · cod. <span class="mono">${esc(code)}</span>${indirizzo ? '<br>' + esc(indirizzo) : ''}`;
+}
+
+function raccogliNuova(){
+  const err = $('f-err'); err.textContent = '';
+  const evento = $('f-evento').value.trim();
+  if (!evento) { err.textContent = 'Indica il nome dell\'evento.'; return null; }
+  const t = state.nuova?.titoli || [];
+  if (!t.length) { err.textContent = 'Nessun titolo: aggiungi almeno un EAN con le copie.'; return null; }
+  const cli = state.nuova.cliente;
+  let codice = cli?.code || '';
+  if (!codice && /^\d{4,10}$/.test($('f-cliente-cerca').value.trim())) codice = $('f-cliente-cerca').value.trim();
+  let destinazione = null;
+  if (document.querySelector('input[name=dest]:checked').value === 'altra') {
+    destinazione = { companyName: $('d-nome').value.trim(), address: $('d-indirizzo').value.trim(), postalCode: $('d-cap').value.trim(),
+      city: $('d-citta').value.trim(), province: $('d-prov').value.trim().toUpperCase(), country: 'IT', phone: $('d-tel').value.trim(), email: $('d-email').value.trim() };
+    if (!destinazione.companyName || !destinazione.address) { err.textContent = 'Per l\'altra destinazione servono ragione sociale e indirizzo.'; return null; }
+  }
+  const m = state.nuova.mail || {};
+  return {
+    pratica: {
+      evento, luogo: $('f-luogo').value.trim() || null,
+      data_inizio: $('f-dal').value || null, data_fine: $('f-al').value || null,
+      scadenza_ordine: $('f-scad').value || null, scadenza_consegna: $('f-cons').value || null,
+      cliente_nome: cli?.name || (codice ? null : $('f-cliente-cerca').value.trim() || null), cliente_codice: codice || null, cliente_account: cli?.account || null,
+      document_type: $('f-doctype').value, order_reference: $('f-rif').value.trim() || null, destinazione,
+      mitt_nome: $('f-mitt-nome').value.trim() || null, mitt_email: $('f-mitt-email').value.trim() || null,
+      mail_oggetto: $('f-oggetto').value.trim() || null, mail_data: m.date && !isNaN(m.date) ? m.date.toISOString() : null,
+      mail_testo: m.text || null, mail_file_nome: state.nuova.nomeFile || null, note: $('f-note').value.trim() || null,
+    },
+    righe: t.map(x => ({ ean: x.ean, titolo: x.titolo || null, autore: x.autore || null, editore: x.editore || null, qta_richiesta: n(x.qta) })),
+  };
+}
+async function creaPratica(invia){
+  const dati = raccogliNuova(); if (!dati) return;
+  if (invia && !dati.pratica.cliente_codice) { $('f-err').textContent = 'Per inviare l\'ordine serve il codice cliente Messaggerie.'; return; }
+  ['f-crea', 'f-crea-invia'].forEach(id => $(id).disabled = true);
+  try {
+    const { data: p, error } = await sb.from('ff_pratiche').insert(dati.pratica).select().single();
+    if (error) throw error;
+    const { error: e2 } = await sb.from('ff_righe').insert(dati.righe.map(r => ({ ...r, pratica_id: p.id })));
+    if (e2) throw e2;
+    await logEvento(p.id, 'Pratica creata dalla mail', `${dati.righe.length} titoli, ${dati.righe.reduce((s, r) => s + r.qta_richiesta, 0)} copie${dati.pratica.mail_file_nome ? ' · ' + dati.pratica.mail_file_nome : ''}`);
+    toast(`Pratica ${p.numero} creata`);
+    state.nuova = null; $('nuova-form').classList.add('hidden');
+    await apriPratica(p.id);
+    if (invia) inviaOrdinePrincipale();
+  } catch (e) {
+    $('f-err').textContent = 'Errore: ' + e.message;
+  } finally {
+    ['f-crea', 'f-crea-invia'].forEach(id => $(id).disabled = false);
+  }
+}
+$('f-crea').onclick = () => creaPratica(false);
+$('f-crea-invia').onclick = () => creaPratica(true);
+$('f-annulla').onclick = () => { state.nuova = null; $('nuova-form').classList.add('hidden'); };
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOTORE ORDINI (come BookUp → Ordini di rifornimento)
+   titolo/editore → utenza giusta (PDE / PDE Service) → invio → N. ordine interno
+   ═══════════════════════════════════════════════════════════════════════ */
+async function mapConcorrenza(items, limit, fn){
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => { while (i < items.length) { const k = i++; await fn(items[k], k); } }));
+}
+async function infoTitolo(ean){
+  try {
+    const d = await rpnApi(`titoli-detail?ean=${encodeURIComponent(ean)}`);
+    const a = d.anagrafica || {};
+    if (d.title || a.title || a.publisher) return { title: d.title || a.title || '', author: a.author || '', publisher: a.publisher || '', availability: d.availabilityTotal ?? null };
+  } catch (_e) {}
+  try {
+    const d = await rpnApi(`titoli-search?query=${encodeURIComponent(ean)}`);
+    const t = (d.titles || []).find(x => String(x.ean) === String(ean));
+    if (t) return { title: t.title || '', author: t.author || '', publisher: t.publisher || '', availability: t.availability ?? null };
+  } catch (_e) {}
+  return null;
+}
+const keyEditore = p => String(p || '').trim().toUpperCase().replace(/\s+/g, ' ');
+// Smista gli EAN sulle utenze Messaggerie in base all'editore (cache verificata + probe per gli editori nuovi)
+async function instrada(items, p, log){
+  const senzaEditore = items.filter(x => !x.editore);
+  if (senzaEditore.length) {
+    log(`🔎 Recupero editore di ${senzaEditore.length} titoli…`);
+    await mapConcorrenza(senzaEditore, 6, async x => {
+      const info = await infoTitolo(x.ean);
+      if (info) { x.editore = info.publisher; x.titolo ||= info.title; x._aggiorna = true; }
+    });
+  }
+  const editori = [...new Set(items.map(x => x.editore).filter(Boolean))];
+  const routing = {};
+  if (editori.length) {
+    const d = await rpnApi(`rifornimento-editore-routing?editori=${encodeURIComponent(editori.join(','))}`).catch(() => ({ routing: {} }));
+    Object.entries(d.routing || {}).forEach(([k, v]) => { if (v && v.account) routing[k] = v.account; });
+    const daProbe = editori.filter(e => !routing[keyEditore(e)]);
+    if (daProbe.length) log(`🧭 Verifica utenza per ${daProbe.length} editori mai usati prima (può richiedere qualche secondo)…`);
+    await mapConcorrenza(daProbe, 4, async ed => {
+      const ean = items.find(x => x.editore === ed).ean;
+      try {
+        const pr = await rpnApi('rifornimento-editore-probe', { method: 'POST', body: JSON.stringify({ editore: ed, ean, customerCode: p.cliente_codice, documentType: p.document_type }) });
+        if (pr.account) routing[keyEditore(ed)] = pr.account;
+      } catch (_e) {}
+    });
+  }
+  const gruppi = {}, bloccati = [];
+  items.forEach(x => {
+    const acc = x.editore && routing[keyEditore(x.editore)];
+    if (acc) (gruppi[acc] ||= []).push(x); else bloccati.push({ ...x, motivo: x.editore ? 'editore non abilitato sulle utenze PDE' : 'titolo non trovato su Messaggerie' });
+  });
+  return { gruppi, bloccati };
+}
+async function recuperaNumeri(ordini, tentativi = 12, attesa = 4000){
+  for (let t = 0; t < tentativi; t++) {
+    const pend = ordini.filter(o => !o.numero_interno && o.batch_id);
+    if (!pend.length) return;
+    try {
+      const res = await orderIdApi(pend.map(o => ({ account: o.account, batchId: o.batch_id })));
+      for (let k = 0; k < pend.length; k++) {
+        if (res[k]?.orderNumber) {
+          pend[k].numero_interno = String(res[k].orderNumber);
+          await sb.from('ff_ordini').update({ numero_interno: pend[k].numero_interno }).eq('id', pend[k].id);
+        }
+      }
+    } catch (e) { console.warn('rifornimento-order-id', e.message); }
+    if (ordini.some(o => !o.numero_interno) && t < tentativi - 1) await sleep(attesa);
+  }
+}
+// Invia a Messaggerie le quantità indicate. tipo: 'principale' | 'recupero'
+async function inviaOrdini(items, tipo, log){
+  const p = state.pr.p;
+  if (!puoInviare()) throw new Error('Serve l\'accesso RPN amministratore (collegalo in BookUp → Accessi).');
+  if (!p.cliente_codice) throw new Error('Manca il codice cliente: inseriscilo in "Modifica dati".');
+  const { gruppi, bloccati } = await instrada(items, p, log);
+  // Aggiorna titolo/editore recuperati durante l'instradamento
+  for (const x of items.filter(x => x._aggiorna)) {
+    await sb.from('ff_righe').update({ editore: x.editore, titolo: x.titolo }).eq('pratica_id', p.id).eq('ean', x.ean);
+  }
+  if (bloccati.length) log(`<span style="color:var(--ko)">⚠️ ${bloccati.length} titoli non inviabili: ${bloccati.map(b => esc(b.ean) + ' (' + esc(b.motivo) + ')').join(', ')}</span>`);
+  const creati = [];
+  for (const [account, righe] of Object.entries(gruppi)) {
+    const copie = righe.reduce((s, r) => s + r.qta, 0);
+    log(`📤 Invio ordine ${tipo === 'recupero' ? 'di recupero ' : ''}(${righe.length} titoli, ${copie} copie)…`);
+    const res = await rpnApi('rifornimento-order', {
+      method: 'POST',
+      body: JSON.stringify({
+        account, customerCode: p.cliente_codice, documentType: p.document_type,
+        orderReference: (p.order_reference || p.numero) + (tipo === 'recupero' ? ' REC' : ''),
+        notes: `PDE Festival ${p.numero} - ${p.evento}`.slice(0, 200),
+        items: righe.map(r => ({ ean: r.ean, quantity: r.qta, notes: '' })),
+        destination: p.destinazione || null,
+      }),
+    });
+    const { data: o, error } = await sb.from('ff_ordini').insert({
+      pratica_id: p.id, tipo, account, batch_id: res.batchId || null, numero_interno: res.orderNumber ? String(res.orderNumber) : null,
+      document_type: p.document_type, copie, titoli: righe.length, righe: righe.map(r => ({ ean: r.ean, qta: r.qta })),
+    }).select().single();
+    if (error) log(`<span style="color:var(--ko)">Ordine inviato ma non registrato nella pratica: ${esc(error.message)} (BatchID ${res.batchId})</span>`);
+    else { creati.push(o); state.pr.ordini.push(o); }
+    // Anche nello storico "Ordini inviati" di BookUp (il cron completa il N. ordine interno)
+    await sb.from('rifornimento_ordini_inviati').insert({ account, batch_id: Number(res.batchId), customer_code: p.cliente_codice, document_type: p.document_type,
+      order_reference: (p.order_reference || p.numero) + (tipo === 'recupero' ? ' REC' : ''), copie, titoli: righe.length, origine: 'festival' }).then(() => {}, () => {});
+  }
+  if (creati.length) {
+    log('🔄 Recupero numero ordine Messaggerie…');
+    await recuperaNumeri(creati);
+    creati.forEach(o => log(o.numero_interno ? `✅ Ordine <b>N. ${esc(o.numero_interno)}</b> — ${o.copie} copie su ${o.titoli} titoli` : `✅ Ordine inviato (BatchID ${o.batch_id}) — numero in arrivo, si aggiornerà da solo`));
+    await logEvento(p.id, tipo === 'recupero' ? 'Ordine di recupero inviato' : 'Ordine inserito su Messaggerie',
+      creati.map(o => `${o.numero_interno ? 'N. ' + o.numero_interno : 'BatchID ' + o.batch_id} · ${o.copie} copie`).join(' | ') + (bloccati.length ? ` · ${bloccati.length} titoli non inviabili` : ''));
+    await sb.from('ff_pratiche').update({ stato: tipo === 'recupero' ? 'in_recupero' : (p.stato === 'nuova' ? 'ordinata' : p.stato) }).eq('id', p.id);
+  }
+  return { creati, bloccati };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EVASIONE: legge evaso/inevaso degli ordini dal portale ordini Messaggerie
+   ═══════════════════════════════════════════════════════════════════════ */
+async function verificaEvasione(log){
+  if (!state.meli?.connected) throw new Error('Serve l\'account Messaggerie Libri collegato (BookUp → Accessi).');
+  const { ordini } = state.pr;
+  await recuperaNumeri(ordini, 1, 0);
+  const conNumero = ordini.filter(o => o.numero_interno);
+  if (!conNumero.length) throw new Error('Nessun ordine ha ancora il numero Messaggerie: riprova tra qualche minuto.');
+  for (const o of conNumero) {
+    log(`🔎 Ordine ${esc(o.numero_interno)}…`);
+    let nOrdine = o.n_ordine;
+    if (!nOrdine) {
+      const r = await rpnApi('verifica-ordini-righe', { method: 'POST', body: JSON.stringify({
+        startRow: 0, endRow: 10, sortModel: [], periodPreset: 'all',
+        filterModel: { N_ORDINE_INTERNO: { filterType: 'text', type: 'equals', filter: String(o.numero_interno) } } }) });
+      nOrdine = (r.rows || [])[0]?.N_ORDINE;
+      if (!nOrdine) { log(`<span class="muted">… non ancora visibile nel portale ordini Messaggerie</span>`); continue; }
+    }
+    const det = await rpnApi('verifica-ordini-dettaglio', { method: 'POST', body: JSON.stringify({ nOrdine }) });
+    const perEan = {};
+    (det.rows || []).forEach(r => {
+      const e = normEan(r.EAN13); if (!e) return;
+      const x = perEan[e] ||= { evaso: 0, inevaso: 0, prenotato: 0, impegnato: 0, motivo: '', stato: '' };
+      x.evaso += n(r.QTA_EVASO); x.inevaso += n(r.QTA_INEVASO); x.prenotato += n(r.QTA_PRENOTATO_CALC); x.impegnato += n(r.QTA_IMPEGNATO_CALC);
+      if (r.MOTIVO_INEVASO) x.motivo = r.MOTIVO_INEVASO; if (r.STATUS_CONSEGNA) x.stato = r.STATUS_CONSEGNA;
+    });
+    const righe = (o.righe || []).map(r => ({ ...r, ...(perEan[r.ean] || {}) }));
+    o.righe = righe; o.n_ordine = String(nOrdine); o.verificato_at = new Date().toISOString();
+    await sb.from('ff_ordini').update({ righe, n_ordine: o.n_ordine, verificato_at: o.verificato_at }).eq('id', o.id);
+    const ev = righe.reduce((s, r) => s + n(r.evaso), 0), inv = righe.reduce((s, r) => s + n(r.inevaso), 0);
+    log(`✅ ${esc(o.numero_interno)}: evaso ${ev}, inevaso ${inv}`);
+  }
+  await ricalcolaRighe();
+  await logEvento(state.pr.p.id, 'Verifica evasione', state.pr.righe.filter(r => r.qta_inevasa > 0).length + ' titoli con inevaso aperto');
+}
+// Per ogni EAN: ordinato, evaso, inevaso aperto = Σ inevaso − copie già rimesse in ordini di recupero
+function aggregaRiga(ean){
+  const out = { ordinato: 0, evaso: 0, inevasoTot: 0, recupero: 0, inAttesa: 0, motivo: '', stato: '', verificato: false };
+  state.pr.ordini.forEach(o => (o.righe || []).forEach(r => {
+    if (r.ean !== ean) return;
+    out.ordinato += n(r.qta);
+    if (o.tipo === 'recupero') out.recupero += n(r.qta);
+    if (o.verificato_at && ('evaso' in r || 'inevaso' in r)) {
+      out.verificato = true; out.evaso += n(r.evaso); out.inevasoTot += n(r.inevaso);
+      if (r.motivo) out.motivo = r.motivo; if (r.stato) out.stato = r.stato;
+    } else out.inAttesa += n(r.qta);
+  }));
+  // Le copie rimesse in recupero non sono più "aperte"; se il recupero a sua volta
+  // resta inevaso, quella quantità rientra in inevasoTot alla verifica successiva.
+  out.inevasoAperto = Math.max(0, out.inevasoTot - out.recupero);
+  return out;
+}
+async function ricalcolaRighe(){
+  for (const r of state.pr.righe) {
+    const a = aggregaRiga(r.ean);
+    const upd = { qta_evasa: a.verificato ? a.evaso : null, qta_inevasa: a.verificato ? a.inevasoAperto : null, motivo_inevaso: a.motivo || null, stato_lavorazione: a.stato || null, verificato_at: a.verificato ? new Date().toISOString() : null };
+    if (a.inevasoAperto > 0 && !r.ristampa) upd.ristampa = 'da_verificare';
+    Object.assign(r, upd);
+    await sb.from('ff_righe').update(upd).eq('id', r.id);
+  }
+}
+
+/* ═════════ DETTAGLIO PRATICA ═════════ */
+async function apriPratica(id){
+  const [{ data: p, error }, { data: righe }, { data: ordini }, { data: eventi }] = await Promise.all([
+    sb.from('ff_pratiche').select('*').eq('id', id).single(),
+    sb.from('ff_righe').select('*').eq('pratica_id', id).order('id'),
+    sb.from('ff_ordini').select('*').eq('pratica_id', id).order('created_at'),
+    sb.from('ff_eventi').select('*').eq('pratica_id', id).order('created_at', { ascending: false }),
+  ]);
+  if (error) { toast('Pratica non trovata: ' + error.message); return; }
+  state.pr = { p, righe: righe || [], ordini: ordini || [], eventi: eventi || [], tab: state.pr?.p?.id === id ? state.pr.tab : 'titoli', sel: new Set() };
+  mostra('pratica');
+  history.replaceState(null, '', '#pratica=' + id);
+  renderPratica();
+  // Numeri d'ordine ancora mancanti: prova a recuperarli in background
+  if (state.pr.ordini.some(o => !o.numero_interno && o.batch_id)) recuperaNumeri(state.pr.ordini, 3, 4000).then(() => state.pr?.p.id === id && renderPratica());
+}
+function fasi(){
+  const { p, righe, ordini } = state.pr;
+  const princ = ordini.filter(o => o.tipo === 'principale');
+  const daOrdinare = righe.filter(r => { const a = aggregaRiga(r.ean); return r.qta_richiesta - (a.ordinato - a.recupero) > 0; });
+  const comunicato = princ.length && princ.every(o => o.comunicato_at);
+  const verificato = ordini.length && ordini.every(o => o.verificato_at);
+  const inevaso = righe.reduce((s, r) => s + n(r.qta_inevasa), 0);
+  const s = [
+    { t: 'Mail ricevuta', ok: true },
+    { t: 'Ordine inserito', ok: princ.length > 0 && !daOrdinare.length },
+    { t: 'Comunicato a Messaggerie', ok: !!comunicato },
+    { t: 'Evasione verificata', ok: !!verificato },
+    { t: 'Inevasi recuperati', ok: !!verificato && inevaso === 0 },
+    { t: 'Chiusa', ok: p.stato === 'chiusa' },
+  ];
+  let azione;
+  if (p.stato === 'chiusa') azione = { t: 'Pratica chiusa.', b: null };
+  else if (!princ.length || daOrdinare.length) azione = { t: `<b>Inserisci l'ordine su Messaggerie</b> per ${daOrdinare.length || righe.length} titoli${p.scadenza_ordine ? ' — scadenza ' + fmtData(p.scadenza_ordine) : ''}.`, b: ['Invia ordine a Messaggerie', 'inviaOrdinePrincipale()', 'btn-ok'] };
+  else if (princ.some(o => !o.numero_interno)) azione = { t: 'In attesa del numero ordine da Messaggerie.', b: ['Aggiorna numero ordine', 'aggiornaNumeri()', 'btn-sec'] };
+  else if (!comunicato) azione = { t: '<b>Comunica a Messaggerie l\'avvenuto inserimento</b> con il numero d\'ordine.', b: ['Prepara la mail', "vaiTab('mail')", 'btn-primary'] };
+  else if (!verificato) azione = { t: '<b>Verifica l\'evasione</b>: quante copie sono state evase e quali sono rimaste inevase.', b: ['Verifica evasione', 'eseguiVerifica()', 'btn-primary'] };
+  else if (inevaso > 0) azione = { t: `<b>${inevaso} copie inevase</b>: verifica le ristampe con gli editori e rimetti in ordine le quantità recuperabili.`, b: ['Ordine di recupero inevasi', "vaiTab('titoli');apriRecupero()", 'btn-ok'] };
+  else azione = { t: 'Tutto evaso: puoi chiudere la pratica.', b: ['Chiudi pratica', "cambiaStato('chiusa')", 'btn-primary'] };
+  return { s, azione };
+}
+function renderPratica(){
+  const { p, righe, ordini } = state.pr;
+  const { s, azione } = fasi();
+  const cur = s.findIndex(x => !x.ok);
+  const copie = righe.reduce((a, r) => a + n(r.qta_richiesta), 0);
+  const dest = p.destinazione ? [p.destinazione.companyName, p.destinazione.address, p.destinazione.postalCode, p.destinazione.city, p.destinazione.province].filter(Boolean).join(', ') : 'sede del cliente';
+  $('view-pratica').innerHTML = `
+    <div style="margin-bottom:10px;"><button class="btn btn-sec btn-sm" onclick="mostra('elenco');caricaElenco()">← Pratiche</button></div>
+    <div class="card">
+      <div class="pr-head">
+        <div style="flex:1;min-width:260px;">
+          <div class="pr-num">${esc(p.numero)} · <span class="pill p-${p.stato}">${STATO_LABEL[p.stato]}</span>${p.accordo_tardiva ? ' <span class="pill p-warn">accordo consegna tardiva</span>' : ''}</div>
+          <div class="pr-title">${esc(p.evento)}</div>
+          <div class="pr-meta">
+            ${p.luogo ? `<span><b>Luogo</b>${esc(p.luogo)}</span>` : ''}
+            ${p.data_inizio ? `<span><b>Date</b>${fmtData(p.data_inizio)}${p.data_fine && p.data_fine !== p.data_inizio ? ' – ' + fmtData(p.data_fine) : ''}</span>` : ''}
+            <span><b>Cliente</b>${esc(p.cliente_nome || '')} <span class="mono">${esc(p.cliente_codice || '—')}</span></span>
+            <span><b>Tipo</b>${esc(DOCTYPE_LABEL[p.document_type] || p.document_type)}</span>
+            <span><b>Destinazione</b>${esc(dest)}</span>
+          </div>
+          <div class="pr-meta">
+            <span><b>Scadenza ordine</b>${ordini.length ? fmtData(p.scadenza_ordine) : scadHtml(p.scadenza_ordine)}</span>
+            <span><b>Consegna entro</b>${scadHtml(p.scadenza_consegna, p.stato === 'chiusa')}</span>
+            <span><b>Titoli</b>${righe.length} · ${fmtN(copie)} copie</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-sec btn-sm" onclick="modificaDati()">✎ Modifica dati</button>
+          ${p.stato === 'chiusa' ? `<button class="btn btn-sec btn-sm" onclick="cambiaStato('riapri')">Riapri</button>` : `<button class="btn btn-sec btn-sm" onclick="cambiaStato('chiusa')">Chiudi pratica</button>`}
+        </div>
+      </div>
+      <div class="steps">${s.map((x, i) => `<div class="step ${x.ok ? 'done' : i === cur ? 'cur' : ''}"><div class="dot">${x.ok ? '✓' : i + 1}</div>${x.t}</div>`).join('')}</div>
+      <div class="next"><div class="t">👉 ${azione.t}</div>${azione.b ? `<button class="btn ${azione.b[2]}" onclick="${azione.b[1]}">${azione.b[0]}</button>` : ''}</div>
+      <div class="log hidden" id="op-log"></div>
+    </div>
+    <div class="card">
+      <div class="tabs">
+        ${[['titoli', `Titoli e inevasi (${righe.length})`], ['ordini', `Ordini (${ordini.length})`], ['mail', 'Mail a Messaggerie'], ['originale', 'Mail ricevuta'], ['storico', 'Storico']]
+          .map(([k, l]) => `<button class="tab ${state.pr.tab === k ? 'active' : ''}" onclick="vaiTab('${k}')">${l}</button>`).join('')}
+      </div>
+      <div id="tab-body"></div>
+    </div>`;
+  renderTab();
+}
+function vaiTab(k){ state.pr.tab = k; renderPratica(); }
+function opLog(html){ const el = $('op-log'); if (!el) return; el.classList.remove('hidden'); el.innerHTML += `<div>${html}</div>`; el.scrollTop = el.scrollHeight; }
+function renderTab(){
+  const t = state.pr.tab, el = $('tab-body');
+  if (t === 'titoli') el.innerHTML = tabTitoli();
+  else if (t === 'ordini') el.innerHTML = tabOrdini();
+  else if (t === 'mail') { el.innerHTML = tabMail(); componiMail(); }
+  else if (t === 'originale') el.innerHTML = tabOriginale();
+  else el.innerHTML = tabStorico();
+}
+
+/* ── Tab Titoli e inevasi ── */
+function tabTitoli(){
+  const { righe, p } = state.pr;
+  const ordinati = state.pr.ordini.length > 0;
+  return `
+    <div class="toolbar">
+      ${p.stato !== 'chiusa' ? `
+        <button class="btn btn-ok btn-sm" onclick="inviaOrdinePrincipale()">📤 Invia ordine (quantità non ancora ordinate)</button>
+        <button class="btn btn-primary btn-sm" onclick="eseguiVerifica()" ${ordinati ? '' : 'disabled'}>🔎 Verifica evasione</button>
+        <button class="btn btn-sec btn-sm" onclick="apriRecupero()" ${righe.some(r => r.qta_inevasa > 0) ? '' : 'disabled'}>♻️ Ordine di recupero inevasi</button>
+        <button class="btn btn-sec btn-sm" onclick="aggiungiTitoli()">+ Titoli</button>` : ''}
+      <button class="btn btn-sec btn-sm" onclick="esportaExcel()" style="margin-left:auto;">⬇ Excel</button>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>EAN</th><th>Titolo / Editore</th><th class="num">Richieste</th><th class="num">Ordinate</th><th class="num">Evase</th><th class="num">Inevaso aperto</th><th>Motivo / stato</th><th>Ristampa</th><th>Note</th></tr></thead>
+      <tbody>${righe.map(r => {
+        const a = aggregaRiga(r.ean);
+        const manca = r.qta_richiesta - (a.ordinato - a.recupero);
+        return `<tr>
+          <td class="mono">${esc(r.ean)}</td>
+          <td>${esc(r.titolo || '')}<div class="muted" style="font-size:12px;">${esc(r.editore || '')}</div></td>
+          <td class="num">${!ordinati || manca > 0 ? `<input type="number" min="0" value="${r.qta_richiesta}" onchange="aggiornaRiga(${r.id},{qta_richiesta:Math.max(0,+this.value||0)})">` : fmtN(r.qta_richiesta)}</td>
+          <td class="num">${a.ordinato ? fmtN(a.ordinato) + (a.recupero ? `<div class="muted" style="font-size:11px;">di cui ${a.recupero} recupero</div>` : '') : (ordinati ? '<span class="pill p-warn">da ordinare</span>' : '—')}</td>
+          <td class="num">${r.qta_evasa ?? (a.inAttesa ? '<span class="muted">in verifica</span>' : '—')}</td>
+          <td class="num">${r.qta_inevasa ? `<span class="pill p-ko">${r.qta_inevasa}</span>` : (r.qta_inevasa === 0 ? '<span class="pill p-ok">0</span>' : '—')}</td>
+          <td style="font-size:12px;">${esc(r.motivo_inevaso || '')}${r.stato_lavorazione ? `<div class="muted">${esc(r.stato_lavorazione)}</div>` : ''}</td>
+          <td>${r.qta_inevasa || r.ristampa ? `<select onchange="aggiornaRiga(${r.id},{ristampa:this.value})">${Object.entries(RISTAMPA_LABEL).map(([k, l]) => `<option value="${k}" ${r.ristampa === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+            ${r.ristampa === 'confermata' ? `<input type="date" value="${r.ristampa_data || ''}" title="Data disponibilità ristampa" onchange="aggiornaRiga(${r.id},{ristampa_data:this.value||null})" style="margin-top:4px;">` : ''}` : '<span class="muted">—</span>'}</td>
+          <td><input type="text" value="${esc(r.note || '')}" placeholder="…" onchange="aggiornaRiga(${r.id},{note:this.value||null})" style="min-width:120px;"></td>
+        </tr>`; }).join('')}</tbody>
+    </table></div>
+    <div id="recupero-box"></div>`;
+}
+async function aggiornaRiga(id, campi){
+  const r = state.pr.righe.find(x => x.id === id);
+  const { error } = await sb.from('ff_righe').update(campi).eq('id', id);
+  if (error) { toast('Errore: ' + error.message); return; }
+  Object.assign(r, campi);
+  if ('ristampa' in campi) await logEvento(state.pr.p.id, 'Ristampa ' + (RISTAMPA_LABEL[campi.ristampa] || '—').toLowerCase(), `${r.ean} ${r.titolo || ''}`);
+  renderPratica();
+}
+function aggiungiTitoli(){
+  modale(`<h3>Aggiungi titoli</h3>
+    <div class="field"><label>Uno per riga: EAN e copie</label><textarea id="m-tit" rows="6" placeholder="9788807035012 5"></textarea></div>
+    <div class="row" style="margin-top:12px;"><button class="btn btn-primary" id="m-ok">Aggiungi</button><button class="btn btn-sec" onclick="chiudiModale()">Annulla</button></div>`);
+  $('m-ok').onclick = async () => {
+    const nuovi = unisciTitoli(titoliDaTesto($('m-tit').value));
+    if (!nuovi.length) { toast('Nessun EAN valido.'); return; }
+    const esistenti = new Map(state.pr.righe.map(r => [r.ean, r]));
+    for (const t of nuovi) {
+      const ex = esistenti.get(t.ean);
+      if (ex) await sb.from('ff_righe').update({ qta_richiesta: ex.qta_richiesta + t.qta }).eq('id', ex.id);
+      else await sb.from('ff_righe').insert({ pratica_id: state.pr.p.id, ean: t.ean, qta_richiesta: t.qta, titolo: t.titolo || null });
+    }
+    await logEvento(state.pr.p.id, 'Titoli aggiunti', nuovi.map(t => `${t.ean} ×${t.qta}`).join(', '));
+    chiudiModale(); apriPratica(state.pr.p.id);
+  };
+}
+async function inviaOrdinePrincipale(){
+  const { righe } = state.pr;
+  const items = righe.map(r => { const a = aggregaRiga(r.ean); return { ean: r.ean, qta: r.qta_richiesta - (a.ordinato - a.recupero), editore: r.editore, titolo: r.titolo }; }).filter(x => x.qta > 0);
+  if (!items.length) { toast('Tutte le quantità richieste sono già state ordinate.'); return; }
+  const copie = items.reduce((s, x) => s + x.qta, 0);
+  if (!confirm(`Inviare a Messaggerie l'ordine per ${items.length} titoli (${copie} copie) al cliente ${state.pr.p.cliente_codice || '?'}?\nL'operazione non è annullabile da qui.`)) return;
+  await esegui(async () => { await inviaOrdini(items, 'principale', opLog); });
+}
+async function eseguiVerifica(){ await esegui(() => verificaEvasione(opLog)); }
+async function aggiornaNumeri(){ await esegui(async () => { await recuperaNumeri(state.pr.ordini, 3, 3000); }); }
+// Esegue un'operazione lunga mostrando il registro, poi ricarica la pratica conservando il registro
+async function esegui(fn){
+  $('op-log').innerHTML = ''; $('op-log').classList.remove('hidden');
+  document.querySelectorAll('#view-pratica button').forEach(b => b.disabled = true);
+  try { await fn(); }
+  catch (e) { opLog(`<span style="color:var(--ko)">❌ ${esc(e.message)}</span>`); }
+  const logHtml = $('op-log').innerHTML;
+  await apriPratica(state.pr.p.id);
+  $('op-log').innerHTML = logHtml; $('op-log').classList.remove('hidden');
+}
+function apriRecupero(){
+  const box = $('recupero-box'); if (!box) return;
+  const cand = state.pr.righe.filter(r => r.qta_inevasa > 0);
+  box.innerHTML = `<div class="card" style="margin-top:14px;background:var(--card-2);">
+    <h3>♻️ Ordine di recupero inevasi</h3>
+    <p class="muted" style="margin-bottom:10px;">Seleziona i titoli da rimettere in ordine (es. ristampa confermata e tempi compatibili con la consegna${state.pr.p.scadenza_consegna ? ' del ' + fmtData(state.pr.p.scadenza_consegna) : ''}). La quantità proposta è l'inevaso aperto.</p>
+    <table><thead><tr><th></th><th>EAN</th><th>Titolo</th><th>Ristampa</th><th class="num">Inevaso</th><th class="num">Da riordinare</th></tr></thead>
+    <tbody>${cand.map(r => `<tr>
+      <td><input type="checkbox" class="rec-chk" data-id="${r.id}" ${r.ristampa !== 'non_prevista' ? 'checked' : ''}></td>
+      <td class="mono">${esc(r.ean)}</td><td>${esc(r.titolo || '')}</td>
+      <td>${esc(RISTAMPA_LABEL[r.ristampa] || '—')}${r.ristampa_data ? ' · ' + fmtData(r.ristampa_data) : ''}</td>
+      <td class="num">${r.qta_inevasa}</td>
+      <td class="num"><input type="number" class="rec-qta" data-id="${r.id}" min="1" value="${r.qta_inevasa}"></td></tr>`).join('')}</tbody></table>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn btn-ok" onclick="inviaRecupero()">📤 Invia ordine di recupero</button>
+      ${state.pr.p.accordo_tardiva ? '<span class="pill p-warn">Accordo consegna tardiva con Messaggerie attivo</span>' : `<label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" onchange="aggiornaPratica({accordo_tardiva:this.checked})"> C'è un accordo con Messaggerie per la consegna tardiva</label>`}
+    </div></div>`;
+  box.scrollIntoView({ behavior: 'smooth' });
+}
+async function inviaRecupero(){
+  const items = [];
+  document.querySelectorAll('.rec-chk:checked').forEach(c => {
+    const r = state.pr.righe.find(x => x.id === +c.dataset.id);
+    const q = +document.querySelector(`.rec-qta[data-id="${c.dataset.id}"]`).value || 0;
+    if (r && q > 0) items.push({ ean: r.ean, qta: q, editore: r.editore, titolo: r.titolo });
+  });
+  if (!items.length) { toast('Seleziona almeno un titolo.'); return; }
+  if (!confirm(`Inviare l'ordine di recupero per ${items.length} titoli (${items.reduce((s, x) => s + x.qta, 0)} copie)?`)) return;
+  await esegui(async () => { await inviaOrdini(items, 'recupero', opLog); await ricalcolaRighe(); });
+}
+function esportaExcel(){
+  const { p, righe } = state.pr;
+  const aoa = [['EAN', 'Titolo', 'Editore', 'Richieste', 'Ordinate', 'Evase', 'Inevaso aperto', 'Motivo inevaso', 'Ristampa', 'Data ristampa', 'Note']];
+  righe.forEach(r => { const a = aggregaRiga(r.ean); aoa.push([r.ean, r.titolo || '', r.editore || '', r.qta_richiesta, a.ordinato, r.qta_evasa ?? '', r.qta_inevasa ?? '', r.motivo_inevaso || '', RISTAMPA_LABEL[r.ristampa] || '', r.ristampa_data || '', r.note || '']); });
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Titoli');
+  XLSX.writeFile(wb, `${p.numero}_${p.evento.replace(/[^\w]+/g, '_').slice(0, 40)}.xlsx`);
+}
+
+/* ── Tab Ordini ── */
+function tabOrdini(){
+  const { ordini } = state.pr;
+  if (!ordini.length) return '<div class="empty">Nessun ordine ancora inviato a Messaggerie.</div>';
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>N. ordine Messaggerie</th><th>Tipo</th><th>Utenza</th><th>Inviato</th><th class="num">Titoli</th><th class="num">Copie</th><th class="num">Evase</th><th class="num">Inevase</th><th>Verificato</th><th>Comunicato</th></tr></thead>
+    <tbody>${ordini.map(o => {
+      const ev = o.verificato_at ? (o.righe || []).reduce((s, r) => s + n(r.evaso), 0) : null;
+      const inv = o.verificato_at ? (o.righe || []).reduce((s, r) => s + n(r.inevaso), 0) : null;
+      return `<tr>
+        <td class="mono"><b>${esc(o.numero_interno || '…in arrivo')}</b>${o.batch_id ? `<div class="muted" style="font-size:11px;">BatchID ${o.batch_id}</div>` : ''}</td>
+        <td>${o.tipo === 'recupero' ? '<span class="pill p-warn">Recupero</span>' : '<span class="pill p-ok">Principale</span>'}</td>
+        <td>${esc(ACCOUNT_LABEL[o.account] || o.account)}</td>
+        <td>${fmtDataOra(o.created_at)}</td>
+        <td class="num">${o.titoli}</td><td class="num">${o.copie}</td>
+        <td class="num">${fmtN(ev)}</td><td class="num">${inv ? `<span class="pill p-ko">${inv}</span>` : fmtN(inv)}</td>
+        <td>${o.verificato_at ? fmtDataOra(o.verificato_at) : '—'}</td>
+        <td>${o.comunicato_at ? fmtDataOra(o.comunicato_at) : '<span class="pill p-warn">no</span>'}</td>
+      </tr>`; }).join('')}</tbody></table></div>
+    <div style="margin-top:10px;"><button class="btn btn-sec btn-sm" onclick="aggiornaNumeri()">🔄 Aggiorna numeri ordine</button></div>`;
+}
+
+/* ── Tab Mail a Messaggerie: genera la risposta con i numeri d'ordine ── */
+function tabMail(){
+  const { ordini } = state.pr;
+  const daComunicare = ordini.filter(o => !o.comunicato_at);
+  return `
+    <div class="row">
+      <div class="field sm"><label>Modello</label>
+        <select id="mail-tipo" onchange="componiMail()">
+          <option value="conferma">Conferma inserimento ordine</option>
+          <option value="inevasi" ${ordini.some(o => o.verificato_at) && !daComunicare.length ? 'selected' : ''}>Aggiornamento evasione / inevasi</option>
+        </select></div>
+      <div class="field"><label>A</label><input type="text" id="mail-a" value="${esc(state.pr.p.mitt_email || '')}"></div>
+      <div class="field"><label>Cc</label><input type="text" id="mail-cc" value=""></div>
+    </div>
+    <div class="field" style="margin-top:10px;"><label>Oggetto</label><input type="text" id="mail-oggetto"></div>
+    <div class="field" style="margin-top:10px;"><label>Testo</label><textarea id="mail-testo" rows="16" class="mono" style="font-size:12.5px;"></textarea></div>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn btn-primary" onclick="scaricaEml()">✉️ Apri in Outlook (.eml)</button>
+      <button class="btn btn-sec" onclick="apriMailto()">Apri nel programma di posta</button>
+      <button class="btn btn-sec" onclick="copiaMail()">📋 Copia testo</button>
+      <button class="btn btn-ok" onclick="segnaComunicato()" ${daComunicare.length ? '' : 'disabled'}>✓ Segna come comunicato a Messaggerie</button>
+    </div>
+    <p class="muted" style="margin-top:8px;font-size:12px;">"Apri in Outlook" scarica una bozza già compilata: aprila con un doppio clic, controlla e premi Invia. Poi segna la pratica come comunicata.</p>`;
+}
+function firma(){
+  const e = state.me?.email || '';
+  const nome = e.split('@')[0].split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  return `${nome}\nPDE`;
+}
+function componiMail(){
+  const { p, righe, ordini } = state.pr;
+  const tipo = $('mail-tipo').value;
+  const saluto = p.mitt_nome ? `Buongiorno ${p.mitt_nome.split(/\s+/)[0]},` : 'Buongiorno,';
+  const evento = p.evento + (p.luogo ? ` (${p.luogo})` : '') + (p.data_inizio ? `, ${fmtData(p.data_inizio)}${p.data_fine && p.data_fine !== p.data_inizio ? '–' + fmtData(p.data_fine) : ''}` : '');
+  const cliente = [p.cliente_nome, p.cliente_codice ? 'cod. ' + p.cliente_codice : ''].filter(Boolean).join(' – ');
+  const ogg = p.mail_oggetto ? 'R: ' + p.mail_oggetto.replace(/^\s*((r|re|i|fw|fwd|inoltro)\s*:\s*)+/i, '') : `${p.evento} – ordine PDE`;
+  const lineaOrd = o => `• N. ordine ${o.numero_interno || '(in assegnazione, BatchID ' + o.batch_id + ')'} – ${o.titoli} titoli, ${o.copie} copie${o.tipo === 'recupero' ? ' (ordine di recupero)' : ''}`;
+  let testo, oggetto;
+  if (tipo === 'conferma') {
+    const princ = ordini.filter(o => o.tipo === 'principale');
+    const nonOrd = righe.filter(r => { const a = aggregaRiga(r.ean); return r.qta_richiesta - (a.ordinato - a.recupero) > 0; });
+    oggetto = `${ogg} – ordine inserito${princ.length ? ' n. ' + princ.map(o => o.numero_interno || '…').join(', ') : ''}`;
+    testo = `${saluto}
+
+vi confermiamo l'inserimento dell'ordine per ${evento}.
+Cliente: ${cliente || '—'}
+Riferimento: ${p.order_reference || p.numero}
+
+${princ.length ? princ.map(lineaOrd).join('\n') : '(nessun ordine ancora inserito)'}
+${nonOrd.length ? `\nNon è stato possibile inserire i seguenti titoli (in verifica):\n${nonOrd.map(r => `• ${r.ean} ${r.titolo || ''}`).join('\n')}\n` : ''}${p.scadenza_consegna ? `\nConsegna richiesta entro il ${fmtData(p.scadenza_consegna)}.\n` : ''}
+Restiamo a disposizione per qualsiasi necessità.
+
+Cordiali saluti,
+${firma()}`;
+  } else {
+    const inev = righe.filter(r => r.qta_inevasa > 0);
+    const evase = righe.reduce((s, r) => s + n(r.qta_evasa), 0);
+    const rec = ordini.filter(o => o.tipo === 'recupero');
+    oggetto = `${ogg} – aggiornamento evasione`;
+    testo = `${saluto}
+
+vi aggiorniamo sullo stato dell'ordine per ${evento} (cliente ${cliente || '—'}).
+
+Ordini: ${ordini.map(o => o.numero_interno || '…').join(', ')}
+Copie evase: ${evase}
+${inev.length ? `\nTitoli con quantità inevase:\n${inev.map(r => `• ${r.ean} ${r.titolo || ''} – inevase ${r.qta_inevasa}${r.motivo_inevaso ? ' (' + r.motivo_inevaso + ')' : ''}${r.ristampa === 'confermata' ? ' – ristampa confermata' + (r.ristampa_data ? ' per il ' + fmtData(r.ristampa_data) : '') : r.ristampa === 'non_prevista' ? ' – ristampa non prevista' : r.ristampa === 'da_verificare' ? ' – ristampa in verifica con l\'editore' : ''}`).join('\n')}\n` : '\nTutte le quantità risultano evase.\n'}${rec.length ? `\nAbbiamo inserito ${rec.length > 1 ? 'gli ordini integrativi' : "l'ordine integrativo"}:\n${rec.map(lineaOrd).join('\n')}\n` : ''}${p.accordo_tardiva ? '\nCome concordato, per questi titoli è prevista la consegna oltre la scadenza.\n' : ''}
+Restiamo a disposizione.
+
+Cordiali saluti,
+${firma()}`;
+  }
+  $('mail-oggetto').value = oggetto;
+  $('mail-testo').value = testo.replace(/\n{3,}/g, '\n\n');
+}
+function b64utf8(s){ return btoa(unescape(encodeURIComponent(s))); }
+function scaricaEml(){
+  const a = $('mail-a').value.trim(), cc = $('mail-cc').value.trim();
+  const eml = [
+    'X-Unsent: 1',  // Outlook la apre come bozza da inviare
+    `To: ${a}`, cc ? `Cc: ${cc}` : null,
+    `Subject: =?UTF-8?B?${b64utf8($('mail-oggetto').value)}?=`,
+    'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '',
+    b64utf8($('mail-testo').value).replace(/.{76}/g, '$&\r\n'),
+  ].filter(x => x !== null).join('\r\n');
+  const url = URL.createObjectURL(new Blob([eml], { type: 'message/rfc822' }));
+  const link = document.createElement('a'); link.href = url; link.download = `${state.pr.p.numero}_mail_messaggerie.eml`; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function apriMailto(){
+  const url = `mailto:${encodeURIComponent($('mail-a').value.trim())}?${$('mail-cc').value.trim() ? 'cc=' + encodeURIComponent($('mail-cc').value.trim()) + '&' : ''}subject=${encodeURIComponent($('mail-oggetto').value)}&body=${encodeURIComponent($('mail-testo').value)}`;
+  if (url.length > 1900) { copiaMail(); toast('Testo lungo: copiato negli appunti, incollalo nel corpo della mail.', 5000); }
+  location.href = url.length > 1900 ? url.slice(0, url.indexOf('&body=')) : url;
+}
+async function copiaMail(){ await navigator.clipboard.writeText($('mail-testo').value); toast('Testo copiato'); }
+async function segnaComunicato(){
+  const ids = state.pr.ordini.filter(o => !o.comunicato_at).map(o => o.id);
+  if (!ids.length) return;
+  await sb.from('ff_ordini').update({ comunicato_at: new Date().toISOString() }).in('id', ids);
+  await logEvento(state.pr.p.id, 'Comunicato a Messaggerie', `${$('mail-oggetto').value} → ${$('mail-a').value}`);
+  toast('Segnato come comunicato'); apriPratica(state.pr.p.id);
+}
+
+/* ── Tab Mail ricevuta / Storico ── */
+function tabOriginale(){
+  const p = state.pr.p;
+  return `<div class="pr-meta" style="margin:0 0 10px;">
+      <span><b>Da</b>${esc(p.mitt_nome || '')} ${p.mitt_email ? '&lt;' + esc(p.mitt_email) + '&gt;' : ''}</span>
+      <span><b>Ricevuta</b>${fmtDataOra(p.mail_data)}</span>
+      ${p.mail_file_nome ? `<span><b>File</b>${esc(p.mail_file_nome)}</span>` : ''}</div>
+    <div style="font-weight:600;margin-bottom:8px;">${esc(p.mail_oggetto || '')}</div>
+    <pre class="mail">${esc(p.mail_testo || '(testo non disponibile)')}</pre>
+    ${p.note ? `<h3 style="margin-top:14px;">Note</h3><p>${esc(p.note)}</p>` : ''}`;
+}
+function tabStorico(){
+  const ev = state.pr.eventi;
+  return `<div class="row" style="margin-bottom:12px;">
+      <div class="field lg"><input type="text" id="nota-ev" placeholder="Aggiungi una nota (es. sentito l'editore per la ristampa, accordo con Messaggerie…)"></div>
+      <button class="btn btn-sec" onclick="aggiungiNota()">Aggiungi nota</button></div>
+    ${ev.length ? ev.map(e => `<div class="ev"><div class="when">${fmtDataOra(e.created_at)}<div class="who">${esc(e.utente || '')}</div></div>
+      <div><b>${esc(e.azione)}</b>${e.dettaglio ? `<div class="muted" style="font-size:13px;">${esc(e.dettaglio)}</div>` : ''}</div></div>`).join('') : '<div class="empty">Nessun evento.</div>'}`;
+}
+async function aggiungiNota(){
+  const t = $('nota-ev').value.trim(); if (!t) return;
+  await logEvento(state.pr.p.id, 'Nota', t); apriPratica(state.pr.p.id);
+}
+
+/* ── Modifica dati / stato ── */
+async function aggiornaPratica(campi){
+  const { error } = await sb.from('ff_pratiche').update(campi).eq('id', state.pr.p.id);
+  if (error) { toast('Errore: ' + error.message); return false; }
+  Object.assign(state.pr.p, campi);
+  return true;
+}
+async function cambiaStato(azione){
+  const p = state.pr.p;
+  if (azione === 'chiusa') {
+    const inev = state.pr.righe.reduce((s, r) => s + n(r.qta_inevasa), 0);
+    if (!confirm(inev ? `Restano ${inev} copie inevase aperte. Chiudere comunque la pratica?` : 'Chiudere la pratica?')) return;
+    await aggiornaPratica({ stato: 'chiusa' });
+    await logEvento(p.id, 'Pratica chiusa', inev ? `${inev} copie inevase non recuperate` : '');
+  } else {
+    const stato = state.pr.ordini.some(o => o.tipo === 'recupero') ? 'in_recupero' : state.pr.ordini.length ? 'ordinata' : 'nuova';
+    await aggiornaPratica({ stato });
+    await logEvento(p.id, 'Pratica riaperta', '');
+  }
+  apriPratica(p.id);
+}
+function modale(html){ chiudiModale(); const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'modale'; bg.innerHTML = `<div class="modal">${html}</div>`; bg.onclick = e => { if (e.target === bg) chiudiModale(); }; document.body.appendChild(bg); }
+function chiudiModale(){ $('modale')?.remove(); }
+function modificaDati(){
+  const p = state.pr.p;
+  const campo = (id, label, v, type = 'text', cls = '') => `<div class="field ${cls}"><label>${label}</label><input type="${type}" id="${id}" value="${esc(v || '')}"></div>`;
+  modale(`<h3>Modifica dati pratica ${esc(p.numero)}</h3>
+    <div class="row">${campo('e-evento', 'Evento', p.evento, 'text', 'lg')}${campo('e-luogo', 'Luogo', p.luogo)}</div>
+    <div class="row" style="margin-top:10px;">${campo('e-dal', 'Dal', p.data_inizio, 'date', 'sm')}${campo('e-al', 'Al', p.data_fine, 'date', 'sm')}${campo('e-scad', 'Scadenza ordine', p.scadenza_ordine, 'date', 'sm')}${campo('e-cons', 'Consegna entro', p.scadenza_consegna, 'date', 'sm')}</div>
+    <div class="row" style="margin-top:10px;">${campo('e-clinome', 'Cliente', p.cliente_nome)}${campo('e-clicod', 'Codice cliente', p.cliente_codice, 'text', 'sm')}${campo('e-rif', 'Riferimento ordine', p.order_reference)}</div>
+    <div class="row" style="margin-top:10px;">${campo('e-mnome', 'Mittente Messaggerie', p.mitt_nome)}${campo('e-mmail', 'Email risposta', p.mitt_email)}</div>
+    <label style="display:flex;gap:6px;align-items:center;margin-top:12px;"><input type="checkbox" id="e-tard" ${p.accordo_tardiva ? 'checked' : ''}> Accordo con Messaggerie per consegna tardiva</label>
+    <div class="field" style="margin-top:10px;"><label>Note</label><textarea id="e-note" rows="3">${esc(p.note || '')}</textarea></div>
+    <div class="row" style="margin-top:14px;"><button class="btn btn-primary" id="e-ok">Salva</button><button class="btn btn-sec" onclick="chiudiModale()">Annulla</button>
+      <button class="btn btn-ko" style="margin-left:auto;" id="e-del">Elimina pratica</button></div>`);
+  $('e-ok').onclick = async () => {
+    const v = id => $(id).value.trim() || null;
+    const campi = { evento: v('e-evento') || p.evento, luogo: v('e-luogo'), data_inizio: v('e-dal'), data_fine: v('e-al'), scadenza_ordine: v('e-scad'), scadenza_consegna: v('e-cons'),
+      cliente_nome: v('e-clinome'), cliente_codice: v('e-clicod'), order_reference: v('e-rif'), mitt_nome: v('e-mnome'), mitt_email: v('e-mmail'), accordo_tardiva: $('e-tard').checked, note: v('e-note') };
+    const cambiati = Object.keys(campi).filter(k => (campi[k] ?? null) !== (p[k] ?? null));
+    if (await aggiornaPratica(campi)) {
+      if (cambiati.length) await logEvento(p.id, 'Dati modificati', cambiati.join(', '));
+      chiudiModale(); apriPratica(p.id);
+    }
+  };
+  $('e-del').onclick = async () => {
+    if (state.pr.ordini.length && !confirm('La pratica ha ordini già inviati a Messaggerie (non vengono annullati). Eliminarla comunque?')) return;
+    if (!confirm(`Eliminare definitivamente la pratica ${p.numero}?`)) return;
+    const { error, count } = await sb.from('ff_pratiche').delete({ count: 'exact' }).eq('id', p.id);
+    if (error || !count) { toast(error ? 'Errore: ' + error.message : 'Eliminazione riservata agli amministratori PDE.', 5000); return; }
+    chiudiModale(); toast('Pratica eliminata'); mostra('elenco'); caricaElenco();
+  };
+}
+
+avvia();
+</script>
+</body>
+</html>
