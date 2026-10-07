@@ -169,6 +169,17 @@ pre.mail{white-space:pre-wrap;font-family:'DM Mono',monospace;font-size:12px;bac
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:90;padding:16px;}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;width:620px;max-width:100%;max-height:90vh;overflow:auto;}
 
+
+/* ── Fasi ── */
+.fase-card{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--card-2);}
+.fasi-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.fase-chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--border);background:var(--card-2);border-radius:10px;padding:8px 14px;cursor:pointer;text-align:left;}
+.fase-chip span{font-size:11px;color:var(--muted);}
+.fase-chip.active{border-color:var(--blu);background:var(--info-bg);}
+.fase-chip.add{justify-content:center;color:var(--muted);border-style:dashed;}
+.fase-det{border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:10px 14px;margin-top:-1px;}
+.fase-det .pr-meta{align-items:center;}
+
 @media (max-width:760px){
   header{flex-wrap:wrap;padding:10px 16px;}
   nav{margin-left:0;order:3;width:100%;}
@@ -225,7 +236,7 @@ pre.mail{white-space:pre-wrap;font-family:'DM Mono',monospace;font-size:12px;bac
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>Pratica</th><th>Evento</th><th>Cliente</th><th>Scad. ordine</th><th>Consegna</th>
+            <th>Pratica</th><th>Evento</th><th>Cliente</th><th>Fasi</th><th>Prossima scadenza</th>
             <th class="num">Copie</th><th class="num">Inevaso aperto</th><th>Ordini</th><th>Stato</th>
           </tr></thead>
           <tbody id="elenco-body"></tbody>
@@ -253,18 +264,15 @@ pre.mail{white-space:pre-wrap;font-family:'DM Mono',monospace;font-size:12px;bac
 
     <div id="nuova-form" class="hidden">
       <div class="banner info" id="parse-esito"></div>
+      <div id="integrazione-box"></div>
 
       <div class="card">
-        <h2>1 · Evento e scadenze</h2>
+        <h2>1 · Evento</h2>
         <div class="row">
           <div class="field lg"><label>Evento <span id="f-evento-ok"></span></label><input type="text" id="f-evento"></div>
           <div class="field"><label>Luogo <span id="f-luogo-ok"></span></label><input type="text" id="f-luogo"></div>
-        </div>
-        <div class="row" style="margin-top:10px;">
           <div class="field sm"><label>Dal <span id="f-dal-ok"></span></label><input type="date" id="f-dal"></div>
           <div class="field sm"><label>Al <span id="f-al-ok"></span></label><input type="date" id="f-al"></div>
-          <div class="field sm"><label>Scadenza ordine <span id="f-scad-ok"></span></label><input type="date" id="f-scad"></div>
-          <div class="field sm"><label>Consegna entro <span id="f-cons-ok"></span></label><input type="date" id="f-cons"></div>
         </div>
         <div class="row" style="margin-top:10px;">
           <div class="field"><label>Mittente Messaggerie</label><input type="text" id="f-mitt-nome"></div>
@@ -274,62 +282,27 @@ pre.mail{white-space:pre-wrap;font-family:'DM Mono',monospace;font-size:12px;bac
       </div>
 
       <div class="card">
-        <h2>2 · Cliente e destinazione</h2>
+        <h2>2 · Cliente</h2>
         <div class="row">
           <div class="field lg dropdown">
             <label>Cliente (nome libreria o codice) <span id="f-cliente-ok"></span></label>
-            <input type="text" id="f-cliente-cerca" placeholder="Es. Coop Alleanza o 0001234567" autocomplete="off">
+            <input type="text" id="f-cliente-cerca" placeholder="Es. Coop Alleanza o 1793900" autocomplete="off">
             <div class="dd-list hidden" id="f-cliente-dd"></div>
           </div>
           <button class="btn btn-sec" id="f-cliente-btn">Cerca su Messaggerie</button>
-        </div>
-        <div id="f-cliente-sel" class="banner ok hidden" style="margin-top:10px;"></div>
-        <div class="row" style="margin-top:10px;">
-          <div class="field sm"><label>Tipo ordine</label>
-            <select id="f-doctype">
-              <option value="restock">Rifornimento</option>
-              <option value="deposit">Deposito Editore</option>
-              <option value="freeOrder">Omaggi</option>
-              <option value="specialOrder">Ordini Speciali</option>
-              <option value="specialOrderE">Ordini Speciali E</option>
-            </select>
-          </div>
           <div class="field"><label>Riferimento ordine (vuoto = numero pratica)</label><input type="text" id="f-rif"></div>
         </div>
-        <div style="margin-top:12px;">
-          <label style="display:flex;gap:6px;align-items:center;"><input type="radio" name="dest" value="cliente" checked> Consegna alla sede del cliente</label>
-          <label style="display:flex;gap:6px;align-items:center;margin-top:4px;"><input type="radio" name="dest" value="altra"> Altra destinazione (es. sede del festival)</label>
-        </div>
-        <div id="f-dest" class="hidden" style="margin-top:10px;">
-          <div class="row">
-            <div class="field lg"><label>Ragione sociale / presso</label><input type="text" id="d-nome"></div>
-            <div class="field lg"><label>Indirizzo</label><input type="text" id="d-indirizzo"></div>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <div class="field sm"><label>CAP</label><input type="text" id="d-cap"></div>
-            <div class="field"><label>Località</label><input type="text" id="d-citta"></div>
-            <div class="field sm"><label>Provincia</label><input type="text" id="d-prov" maxlength="2"></div>
-            <div class="field"><label>Telefono</label><input type="text" id="d-tel"></div>
-            <div class="field"><label>Email</label><input type="text" id="d-email"></div>
-          </div>
-        </div>
+        <div id="f-cliente-sel" class="banner ok hidden" style="margin-top:10px;"></div>
       </div>
 
       <div class="card">
-        <h2>3 · Titoli richiesti <span class="muted" id="f-titoli-cnt" style="font-size:13px;font-weight:400;"></span></h2>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>EAN</th><th>Titolo</th><th>Editore</th><th class="num">Copie</th><th></th></tr></thead>
-            <tbody id="f-titoli"></tbody>
-          </table>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <h2 style="margin:0;">3 · Fasi e titoli</h2>
+          <span class="muted" style="font-size:13px;">ogni fase ha il suo tipo ordine, le sue date e la sua destinazione</span>
+          <button class="btn btn-sec btn-sm" style="margin-left:auto;" id="f-fase-add">+ Fase</button>
+          <button class="btn btn-sec btn-sm" id="f-titoli-info-btn">Recupera titolo/editore</button>
         </div>
-        <div class="row" style="margin-top:12px;align-items:flex-start;">
-          <div class="field lg"><label>Aggiungi titoli (uno per riga: EAN e copie)</label><textarea id="f-titoli-add" rows="3" placeholder="9788807035012 5&#10;9788817140102;10"></textarea></div>
-          <div style="display:flex;flex-direction:column;gap:8px;padding-top:18px;">
-            <button class="btn btn-sec" id="f-titoli-add-btn">Aggiungi</button>
-            <button class="btn btn-sec" id="f-titoli-info-btn">Recupera titolo/editore</button>
-          </div>
-        </div>
+        <div id="f-fasi"></div>
       </div>
 
       <div class="card">
@@ -337,9 +310,9 @@ pre.mail{white-space:pre-wrap;font-family:'DM Mono',monospace;font-size:12px;bac
         <div class="err" id="f-err" style="margin-top:8px;"></div>
         <div class="row" style="margin-top:8px;">
           <button class="btn btn-primary" id="f-crea">Crea pratica</button>
-          <button class="btn btn-ok" id="f-crea-invia">Crea pratica e invia ordine a Messaggerie</button>
           <button class="btn btn-sec" id="f-annulla">Annulla</button>
         </div>
+        <p class="muted" style="margin-top:8px;font-size:12px;">I titoli si possono aggiungere anche dopo, man mano che arrivano dai colleghi, dagli agenti e dagli editori.</p>
       </div>
     </div>
   </section>
@@ -362,16 +335,20 @@ const BOOKUP_URL = 'https://albertospde.github.io/prenota/';
 // Le due utenze Messaggerie usate per i rifornimenti (smistate in automatico per editore, come in BookUp)
 const RIF_ACCOUNT_IDS = ['pde', 'pde_service'];
 const ACCOUNT_LABEL = { pde: 'PDE', pde_service: 'PDE Service' };
-const DOCTYPE_LABEL = { restock: 'Rifornimento', deposit: 'Deposito Editore', freeOrder: 'Omaggi', specialOrder: 'Ordini Speciali', specialOrderE: 'Ordini Speciali E' };
+const DOCTYPE_LABEL = { restock: 'Rifornimento', specialOrder: 'Ordini Speciali', specialOrderE: 'Ordini Speciali E', deposit: 'Deposito Editore', freeOrder: 'Omaggi' };
 const STATO_LABEL = { nuova: 'Da ordinare', ordinata: 'Ordinata', in_recupero: 'Recupero inevasi', chiusa: 'Chiusa' };
 const RISTAMPA_LABEL = { '': '—', da_verificare: 'Da verificare', confermata: 'Confermata', non_prevista: 'Non prevista' };
+const DATE_FASE = [
+  ['inserire_dal', 'Inserire dal'], ['inserire_entro', 'Inserire entro'],
+  ['consegna_tassativa', 'Consegna tassativa'], ['consegna_fino', 'Consegne fino al'], ['annullo_dal', 'Righe aperte annullate dal'],
+];
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const state = {
   me: null, rpn: null, meli: null,
   pratiche: [], filtro: 'aperte', cerca: '',
   nuova: null,          // bozza pratica in costruzione dalla mail
-  pr: null,             // pratica aperta: { p, righe, ordini, eventi, tab }
+  pr: null,             // pratica aperta: { p, fasi, righe, ordini, eventi, faseId, tab }
 };
 
 /* ═════════ UTILITÀ ═════════ */
@@ -386,12 +363,14 @@ function fmtDataOra(d){ if (!d) return '—'; const x = new Date(d); return x.to
 function n(v){ return Number(v) || 0; }
 function fmtN(v){ return (v === null || v === undefined || v === '') ? '—' : Number(v).toLocaleString('it-IT'); }
 function giorniA(d){ if (!d) return null; const oggi = new Date(); oggi.setHours(0,0,0,0); return Math.round((new Date(d + 'T00:00:00') - oggi) / 86400000); }
-function scadHtml(d, chiusa){
+function oggiIso(){ const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function scadHtml(d, k){
   if (!d) return '<span class="muted">—</span>';
   const g = giorniA(d);
-  if (chiusa) return fmtData(d);
+  // "Inserire dal": data passata = finestra aperta (buono), futura = non ancora aperta
+  if (k === 'inserire_dal') return `${fmtData(d)} <span class="pill ${g <= 0 ? 'p-ok' : 'p-warn'}">${g <= 0 ? 'aperto' : `apre tra ${g} gg`}</span>`;
   const cls = g < 0 ? 'p-ko' : g <= 3 ? 'p-warn' : 'p-ok';
-  const txt = g < 0 ? `scaduta da ${-g} gg` : g === 0 ? 'oggi' : `tra ${g} gg`;
+  const txt = g < 0 ? `passata da ${-g} gg` : g === 0 ? 'oggi' : `tra ${g} gg`;
   return `${fmtData(d)} <span class="pill ${cls}">${txt}</span>`;
 }
 function isoDate(y, m, d){
@@ -401,6 +380,7 @@ function isoDate(y, m, d){
   return dt.toISOString().slice(0, 10);
 }
 function normEan(s){ const d = String(s ?? '').replace(/\D/g, ''); return /^97[89]\d{10}$/.test(d) ? d : (/^\d{13}$/.test(d) ? d : ''); }
+function capitalizza(s){ return String(s || '').toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()); }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function token(){
@@ -497,29 +477,43 @@ document.querySelectorAll('.nav-btn').forEach(b => b.onclick = () => {
   if (b.dataset.view === 'elenco') caricaElenco();
 });
 
+/* ═════════ SCADENZE DELLE FASI ═════════ */
+// Tutte le date "da sorvegliare" di una fase, con etichetta
+function dateFase(f){ return DATE_FASE.filter(([k]) => f[k]).map(([k, l]) => ({ k, l, d: f[k], fase: f.nome })); }
+// Prossima data utile (oggi o futura) fra tutte le fasi; se sono tutte passate, l'ultima
+function prossimaScadenza(fasi){
+  const tutte = fasi.flatMap(dateFase).sort((a, b) => a.d.localeCompare(b.d));
+  const oggi = oggiIso();
+  return tutte.find(x => x.d >= oggi) || tutte[tutte.length - 1] || null;
+}
+
 /* ═════════ ELENCO PRATICHE ═════════ */
 async function caricaElenco(){
-  const [{ data: pr, error }, { data: righe }, { data: ordini }] = await Promise.all([
-    sb.from('ff_pratiche').select('id,numero,stato,evento,luogo,cliente_nome,cliente_codice,scadenza_ordine,scadenza_consegna,created_at').order('created_at', { ascending: false }),
+  const [{ data: pr, error }, { data: fasi }, { data: righe }, { data: ordini }] = await Promise.all([
+    sb.from('ff_pratiche').select('id,numero,stato,evento,luogo,cliente_nome,cliente_codice,created_at').order('created_at', { ascending: false }),
+    sb.from('ff_fasi').select('*').order('posizione'),
     sb.from('ff_righe').select('pratica_id,qta_richiesta,qta_inevasa'),
-    sb.from('ff_ordini').select('pratica_id,tipo,numero_interno'),
+    sb.from('ff_ordini').select('pratica_id,fase_id,tipo,numero_interno'),
   ]);
   if (error) { $('elenco-body').innerHTML = `<tr><td colspan="9" class="err">Errore: ${esc(error.message)}</td></tr>`; return; }
   const agg = {};
-  (righe || []).forEach(r => { const a = agg[r.pratica_id] ||= { copie: 0, inevaso: 0, ordini: [] }; a.copie += n(r.qta_richiesta); a.inevaso += n(r.qta_inevasa); });
-  (ordini || []).forEach(o => { (agg[o.pratica_id] ||= { copie: 0, inevaso: 0, ordini: [] }).ordini.push(o); });
-  state.pratiche = (pr || []).map(p => ({ ...p, ...(agg[p.id] || { copie: 0, inevaso: 0, ordini: [] }) }));
+  const a = id => agg[id] ||= { copie: 0, inevaso: 0, ordini: [], fasi: [] };
+  (righe || []).forEach(r => { a(r.pratica_id).copie += n(r.qta_richiesta); a(r.pratica_id).inevaso += n(r.qta_inevasa); });
+  (ordini || []).forEach(o => a(o.pratica_id).ordini.push(o));
+  (fasi || []).forEach(f => a(f.pratica_id).fasi.push(f));
+  state.pratiche = (pr || []).map(p => ({ ...p, ...a(p.id) }));
   renderElenco();
 }
 function renderElenco(){
   const aperte = state.pratiche.filter(p => p.stato !== 'chiusa');
+  // Fasi ancora senza ordini con termine di inserimento entro 3 giorni
+  const urgenti = aperte.flatMap(p => p.fasi.filter(f => f.inserire_entro && giorniA(f.inserire_entro) <= 3 && !p.ordini.some(o => o.fase_id === f.id)));
   const daOrdinare = aperte.filter(p => p.stato === 'nuova');
-  const inScadenza = aperte.filter(p => p.stato === 'nuova' && p.scadenza_ordine && giorniA(p.scadenza_ordine) <= 3);
   const conInevasi = aperte.filter(p => p.inevaso > 0);
   $('kpis').innerHTML = `
     <div class="kpi"><div class="n">${aperte.length}</div><div class="l">Pratiche aperte</div></div>
-    <div class="kpi ${daOrdinare.length ? 'warn' : 'ok'}"><div class="n">${daOrdinare.length}</div><div class="l">Ordini ancora da inserire</div></div>
-    <div class="kpi ${inScadenza.length ? 'ko' : 'ok'}"><div class="n">${inScadenza.length}</div><div class="l">Scadenza ordine entro 3 giorni</div></div>
+    <div class="kpi ${daOrdinare.length ? 'warn' : 'ok'}"><div class="n">${daOrdinare.length}</div><div class="l">Pratiche senza ordini inseriti</div></div>
+    <div class="kpi ${urgenti.length ? 'ko' : 'ok'}"><div class="n">${urgenti.length}</div><div class="l">Fasi da inserire entro 3 giorni</div></div>
     <div class="kpi ${conInevasi.length ? 'warn' : 'ok'}"><div class="n">${conInevasi.reduce((s, p) => s + p.inevaso, 0)}</div><div class="l">Copie inevase da recuperare (${conInevasi.length} pratiche)</div></div>`;
   const q = state.cerca.toLowerCase();
   const lista = state.pratiche.filter(p => {
@@ -529,18 +523,20 @@ function renderElenco(){
     if (q && ![p.numero, p.evento, p.luogo, p.cliente_nome, p.cliente_codice].some(x => String(x || '').toLowerCase().includes(q))) return false;
     return true;
   });
-  $('elenco-body').innerHTML = lista.length ? lista.map(p => `
-    <tr class="click" onclick="apriPratica(${p.id})">
+  $('elenco-body').innerHTML = lista.length ? lista.map(p => {
+    // Per le fasi già ordinate contano solo consegne e annulli, non più le date di inserimento
+    const ps = prossimaScadenza(p.fasi.map(f => p.ordini.some(o => o.fase_id === f.id) ? { ...f, inserire_dal: null, inserire_entro: null } : f));
+    return `<tr class="click" onclick="apriPratica(${p.id})">
       <td class="mono">${esc(p.numero)}</td>
       <td><b>${esc(p.evento)}</b>${p.luogo ? `<div class="muted" style="font-size:12px;">${esc(p.luogo)}</div>` : ''}</td>
       <td>${esc(p.cliente_nome || '')}${p.cliente_codice ? `<div class="muted mono" style="font-size:11px;">${esc(p.cliente_codice)}</div>` : ''}</td>
-      <td>${p.stato === 'nuova' ? scadHtml(p.scadenza_ordine) : fmtData(p.scadenza_ordine)}</td>
-      <td>${scadHtml(p.scadenza_consegna, p.stato === 'chiusa')}</td>
+      <td style="font-size:12px;">${p.fasi.map(f => esc(f.nome)).join('<br>') || '—'}</td>
+      <td>${ps && p.stato !== 'chiusa' ? `${scadHtml(ps.d, ps.k)}<div class="muted" style="font-size:11px;">${esc(ps.l)}${p.fasi.length > 1 ? ' · ' + esc(ps.fase) : ''}</div>` : '—'}</td>
       <td class="num">${fmtN(p.copie)}</td>
       <td class="num">${p.inevaso ? `<span class="pill p-warn">${fmtN(p.inevaso)}</span>` : '—'}</td>
       <td class="mono" style="font-size:12px;">${p.ordini.map(o => esc(o.numero_interno || '…')).join(', ') || '—'}</td>
       <td><span class="pill p-${p.stato}">${STATO_LABEL[p.stato]}</span></td>
-    </tr>`).join('') : `<tr><td colspan="9" class="empty">Nessuna pratica. Usa <b>+ Nuova da mail</b> e trascina la mail di Messaggerie.</td></tr>`;
+    </tr>`; }).join('') : `<tr><td colspan="9" class="empty">Nessuna pratica. Usa <b>+ Nuova da mail</b> e trascina la mail di Messaggerie.</td></tr>`;
 }
 document.querySelectorAll('[data-filtro]').forEach(c => c.onclick = () => {
   state.filtro = c.dataset.filtro;
@@ -550,7 +546,7 @@ document.querySelectorAll('[data-filtro]').forEach(c => c.onclick = () => {
 $('cerca').oninput = e => { state.cerca = e.target.value; renderElenco(); };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   LETTURA MAIL (.eml / .msg / testo) ED ESTRAZIONE PARAMETRI
+   LETTURA MAIL (.eml / .msg / testo)
    ═══════════════════════════════════════════════════════════════════════ */
 function decodeBytes(bytes, charset){
   try { return new TextDecoder((charset || 'utf-8').toLowerCase().replace(/^(us-ascii|ascii)$/, 'utf-8')).decode(bytes); }
@@ -650,16 +646,18 @@ function parseTestoIncollato(text){
   return { subject: m ? m[1].trim() : '', fromName: fm ? fm[1].replace(/"/g, '').trim() : '', fromEmail: fm ? fm[2].trim() : (f ? (f[1].match(/[\w.+-]+@[\w.-]+/) || [''])[0] : ''), date: null, text, attachments: [] };
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   ESTRAZIONE PARAMETRI
+   ═══════════════════════════════════════════════════════════════════════ */
 const MESI = { gennaio: 1, febbraio: 2, marzo: 3, aprile: 4, maggio: 5, giugno: 6, luglio: 7, agosto: 8, settembre: 9, ottobre: 10, novembre: 11, dicembre: 12,
   gen: 1, feb: 2, mar: 3, apr: 4, mag: 5, giu: 6, lug: 7, ago: 8, set: 9, ott: 10, nov: 11, dic: 12 };
 const RE_MESE = 'gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic';
 function annoDefault(m, d){
   const oggi = new Date(); let y = oggi.getFullYear();
-  const cand = new Date(y, m - 1, d);
-  if (cand < new Date(oggi.getFullYear(), oggi.getMonth() - 2, 1)) y++;   // mese già passato da un pezzo → anno prossimo
+  if (new Date(y, m - 1, d) < new Date(oggi.getFullYear(), oggi.getMonth() - 2, 1)) y++;   // mese già passato da un pezzo → anno prossimo
   return y;
 }
-// Tutte le date del testo con posizione: 12/10/2026, 12.10.26, 12 ottobre (2026), "dal 10 al 12 ottobre"
+// Tutte le date del testo con posizione: 12/10/2026, 12/10/26, 12/10, 12 ottobre (2026), "dal 10 al 12 ottobre"
 function trovaDate(text){
   const out = [];
   const reNum = /\b(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?\b/g;
@@ -685,38 +683,128 @@ function trovaDate(text){
   }
   return out.filter(o => o.iso).sort((a, b) => a.idx - b.idx);
 }
+// Significato di una data dalle parole immediatamente prima (stessa riga) e subito dopo
+function tipoData(text, d){
+  const riga0 = text.lastIndexOf('\n', d.idx) + 1;
+  const prima = text.slice(Math.max(riga0, d.idx - 90), d.idx).toLowerCase();
+  const fineRiga = text.indexOf('\n', d.idx);
+  const dopo = text.slice(d.idx + d.len, fineRiga < 0 ? undefined : Math.min(fineRiga, d.idx + d.len + 50)).toLowerCase();
+  if (/annull/.test(dopo) || /annull\w*[^.]*$/.test(prima)) return 'annullo_dal';
+  if (/(a partire dal|a decorrere dal|dal giorno|^\W*dal|\sdal)\s*(giorno\s*)?$/.test(prima)) return 'inserire_dal';
+  // Parola chiave più vicina alla data: vince quella scritta per ultima prima della data
+  const chiavi = [
+    ['consegna_tassativa', /(tassativ|consegn|arriv|ricever|recapit)/g],
+    ['inserire_entro', /(inserit|inserir|inserim|caricar|caricat|ordinar|trasmett)/g],
+  ];
+  let best = null, bestPos = -1;
+  chiavi.forEach(([k, re]) => { let m; while ((m = re.exec(prima))) if (m.index > bestPos) { bestPos = m.index; best = k; } });
+  if (/fino al(la)?\s*(giorno\s*)?$/.test(prima)) return best === 'inserire_entro' ? 'inserire_entro' : 'consegna_fino';
+  return best;
+}
+// Fasi: ogni paragrafo che nomina un tipo di ordine apre (o richiama) una fase;
+// i paragrafi successivi senza indicazioni appartengono all'ultima fase nominata.
+const MARCATORI_FASE = [
+  { key: 'pi', re: /primo impianto/i, nome: 'Primo impianto' },
+  { key: 'os', re: /ordini?\s+special[ie]/i, nome: 'Ordini speciali', tipo: 'specialOrder' },
+  { key: 'rif', re: /rifornim/i, nome: 'Rifornimenti', tipo: 'restock' },
+  { key: 'dep', re: /deposito/i, nome: 'Deposito', tipo: 'deposit' },
+  { key: 'omg', re: /omaggi/i, nome: 'Omaggi', tipo: 'freeOrder' },
+];
+function tipoOrdineDaTesto(t){
+  if (/ordini?\s+special[ie]\s*e\b/i.test(t)) return 'specialOrderE';
+  for (const m of MARCATORI_FASE) if (m.tipo && m.re.test(t)) return m.tipo;
+  return null;
+}
+function estraiDestinazione(t){
+  const m = t.match(/destinazione\s+alternativ[ao]\s*:?\s*([^)\n]{5,140})/i)
+         || t.match(/(?:al seguente indirizzo|indirizzo di consegna|consegnare presso)\s*:?\s*\n?\s*([^\n]*(?:via|viale|piazza|corso|largo|strada)\b[^\n]{3,120})/i);
+  if (!m) return null;
+  const raw = m[1].replace(/\s+/g, ' ').trim();
+  const parti = raw.match(/^(.*?)\s*,?\s*((?:via|viale|v\.le|piazza|p\.zza|piazzale|corso|largo|strada|vicolo)\b.*)$/i);
+  const nome = parti ? parti[1].replace(/[-–,:]+$/, '').trim() : '';
+  let resto = parti ? parti[2] : raw;
+  const cap = (resto.match(/\b\d{5}\b/) || [''])[0];
+  const prov = (resto.match(/\(([A-Z]{2})\)/) || ['', ''])[1];
+  const citta = (resto.match(/\s([A-ZÀ-Ý][A-ZÀ-Ý' ]{2,})(?:\s*\([A-Z]{2}\))?\s*$/) || ['', ''])[1].trim();
+  if (citta) resto = resto.slice(0, resto.lastIndexOf(citta)).trim();
+  resto = resto.replace(/\b\d{5}\b/, '').replace(/\([A-Z]{2}\)/, '').replace(/[\s,-]+$/, '').trim();
+  return { companyName: nome, address: resto, postalCode: cap, city: citta ? capitalizza(citta) : '', province: prov, country: 'IT', phone: '', email: '', _raw: raw };
+}
+function estraiFasi(testo, dataMail){
+  const paragrafi = testo.split(/\n\s*\n/);
+  const gruppi = new Map();   // key → { nome, tipo, testo }
+  let corrente = null;
+  paragrafi.forEach(par => {
+    const hit = MARCATORI_FASE.find(m => m.re.test(par));
+    if (hit) {
+      // "primo impianto" e "ordini speciali" nella stessa richiesta sono la stessa fase
+      const key = (hit.key === 'os' && gruppi.has('pi')) ? 'pi' : (hit.key === 'pi' && gruppi.has('os')) ? 'os' : hit.key;
+      if (!gruppi.has(key)) gruppi.set(key, { nome: hit.nome, testo: '' });
+      corrente = key;
+    }
+    if (corrente) gruppi.get(corrente).testo += par + '\n\n';
+  });
+  if (!gruppi.size) gruppi.set('unica', { nome: 'Ordine', testo });
+  return [...gruppi.values()].map((g, i) => {
+    const f = { nome: g.nome, document_type: tipoOrdineDaTesto(g.testo) || 'restock', inserire_dal: '', inserire_entro: '', consegna_tassativa: '', consegna_fino: '', annullo_dal: '', destinazione: estraiDestinazione(g.testo), note: '', titoli: [] };
+    if (/fin da subito|da subito|subito/i.test(g.testo) && !f.inserire_dal) f.inserire_dal = dataMail || oggiIso();
+    trovaDate(g.testo).forEach(d => {
+      if (d.range) return;
+      const k = tipoData(g.testo, d);
+      if (k && !f[k]) f[k] = d.iso;
+    });
+    if (/non manterranno prenotazioni|non mantengono prenotazioni/i.test(g.testo)) f.note = 'Gli ordini non mantengono le prenotazioni.';
+    return f;
+  });
+}
+// Separa una mail inoltrata/di integrazione: in alto la nota nuova, sotto il messaggio originale
+function separaInoltro(testo){
+  const m = testo.match(/\n[ \t]*(?:Da|From)\s*:[^\n]*\n(?:[^\n]*\n){0,5}?[ \t]*(?:Oggetto|Subject)\s*:\s*([^\n]*)\n/i);
+  if (!m) return { nota: '', originale: testo, oggettoOriginale: '' };
+  return { nota: testo.slice(0, m.index).trim(), originale: testo.slice(m.index + m[0].length), oggettoOriginale: m[1].trim() };
+}
+function pulisciOggetto(s){
+  return String(s || '').replace(/^\s*((r|re|i|fw|fwd|inoltro|rif)\s*:\s*)+/i, '')
+    .replace(/\*[^*]*\*/g, ' ').replace(/\b(integrazione|aggiornamento|rettifica|modifica|urgente)\b/gi, ' ')
+    .replace(/\s{2,}/g, ' ').replace(/^[\s\-–|:]+|[\s\-–|:]+$/g, '').trim();
+}
 function estraiParametri(mail){
-  const subj = (mail.subject || '').replace(/^\s*((r|re|i|fw|fwd|inoltro|rif)\s*:\s*)+/i, '').trim();
-  const testo = (mail.text || '').replace(/\r/g, '');
-  const tutto = subj + '\n' + testo;
-  const p = { evento: '', luogo: '', dal: '', al: '', scad: '', cons: '', clienteNome: '', clienteCodice: '', rif: '' };
+  const testoPulito = String(mail.text || '').replace(/\r/g, '')
+    .replace(/^[^\n]*questa email arriva da un server esterno[^\n]*\n?/im, '');   // avviso antiphishing aziendale
+  const { nota, originale, oggettoOriginale } = separaInoltro(testoPulito);
+  const subj = pulisciOggetto(oggettoOriginale || mail.subject);
+  const tutto = subj + '\n' + originale;
+  const integrazione = /integrazion|aggiornament|rettifica/i.test(mail.subject || '') || nota.length > 20;
+  const p = { evento: '', luogo: '', dal: '', al: '', clienteNome: '', clienteCodice: '', rif: '', nota: integrazione ? nota : '', integrazione };
 
-  // Evento: prima nell'oggetto, poi nel testo
-  const reEv = /((?:festival|fiera|salone|rassegna|mostra[- ]mercato|book\s?pride|pi[uù] libri pi[uù] liberi|tempo di libri|pordenonelegge|festivaletteratura|passaparola|libri come|bookcity|lucca comics)[^\n.;:()]{0,60})/i;
-  const ev = subj.match(reEv) || testo.match(reEv);
-  p.evento = (ev ? ev[1] : subj).split(/\s[-–|]\s/)[0].replace(/\s+/g, ' ').replace(/\s*[-–,]\s*$/, '').trim();
+  const reEv = /((?:festival|fiera|salone|rassegna|banco|mostra[- ]mercato|book\s?pride|pi[uù] libri pi[uù] liberi|tempo di libri|pordenonelegge|festivaletteratura|passaparola|libri come|bookcity|lucca comics)[^\n.;:()]{0,60})/i;
+  const ev = subj.match(reEv) || originale.match(reEv);
+  p.evento = (subj || (ev ? ev[1] : '')).split(/\s[-–|]\s/)[0].replace(/\s+/g, ' ').trim();
 
-  const lab = (re) => { const m = tutto.match(re); return m ? m[1].replace(/\s+/g, ' ').trim() : ''; };
-  p.luogo = lab(/(?:luogo|sede|location|presso)\s*[:\-]\s*([^\n.;]{3,60})/i)
-    || lab(/(?:si terr[àa]|si svolger[àa]|in programma|avr[àa] luogo)[^\n.]*?\s(?:a|ad|presso)\s+((?:[A-ZÀ-Ý][\wà-ÿ']+)(?:\s+(?:di|del|della|sul|in)?\s*[A-ZÀ-Ý][\wà-ÿ']+){0,3})/);
-  p.clienteCodice = lab(/cod(?:ice)?\.?\s*(?:cliente|cli\.?)\s*[:\-n°.]*\s*(\d{4,10})/i);
-  p.clienteNome = lab(/(?:cliente|libreria|punto vendita)\s*[:\-]\s*([^\n;]{3,80})/i);
-  if (!p.clienteNome) { const c = tutto.match(/\b((?:coop|librerie?\s+coop|ipercoop|feltrinelli|mondadori|giunti|ubik|librerie\.coop)[^\n,;.]{0,40})/i); if (c) p.clienteNome = c[1].trim(); }
+  const lab = re => { const m = tutto.match(re); return m ? m[1].replace(/\s+/g, ' ').trim() : ''; };
+  // Cliente: "cod. 1793900 COOP. LIBRERIE IN PIAZZA ," / "codice cliente: 0001234567" / "cliente: Nome"
+  const cli = tutto.match(/\bcod(?:ice)?\.?\s*(?:cliente|cli\.?)?\s*[:n°.]*\s*(\d{5,10})\b[ \t]*[-–:]?[ \t]*([^\n,;(]{0,70})/i);
+  if (cli) {
+    p.clienteCodice = cli[1];
+    const nome = cli[2].replace(/\s+(parteciper|che|il quale|per)\b.*$/i, '').trim();
+    if (/[A-Za-z]{3}/.test(nome)) p.clienteNome = nome;
+  }
+  if (!p.clienteNome) p.clienteNome = lab(/(?:cliente|libreria|punto vendita)\s*[:\-]\s*([^\n;]{3,80})/i);
   p.rif = lab(/(?:riferimento|rif\.?)\s*(?:ordine)?\s*[:\-]\s*([^\n;]{2,40})/i);
 
-  // Date: la parola chiave nelle ~70 battute precedenti decide il significato
-  const date = trovaDate(tutto);
-  date.forEach(d => {
-    const ctx = tutto.slice(Math.max(0, d.idx - 70), d.idx).toLowerCase();
-    if (d.range === 'dal') { if (!p.dal) p.dal = d.iso; return; }
-    if (d.range === 'al') { if (!p.al) p.al = d.iso; return; }
-    if (/(ordin|inserir|inserimento|caricar|entro e non oltre|scadenza)[^\n]*$/.test(ctx) && !/consegn|arriv|recapit/.test(ctx.slice(-40)) && !p.scad) p.scad = d.iso;
-    else if (/(consegn|arriv|recapit|spedi|merce)[^\n]*$/.test(ctx) && !p.cons) p.cons = d.iso;
-    else if (/\bdal\s*$|\bdal\s+\w*\s*$/.test(ctx) && !p.dal) p.dal = d.iso;
-    else if (/\bal\s*$/.test(ctx) && p.dal && !p.al) p.al = d.iso;
-    else if (/(festival|fiera|evento|manifestazione|si svolger|si terr|giorn)/.test(ctx) && !p.dal) p.dal = d.iso;
+  // Date dell'evento: solo se dichiarate come tali (non le finestre degli ordini)
+  trovaDate(tutto).forEach(d => {
+    const prima = tutto.slice(Math.max(0, d.idx - 80), d.idx).toLowerCase();
+    if (d.range === 'dal' && !p.dal && !/inser|ordin|consegn/.test(prima.slice(-40))) p.dal = d.iso;
+    else if (d.range === 'al' && p.dal && !p.al) p.al = d.iso;
+    else if (!d.range && !p.dal && /(si terr[àa]|si svolger[àa]|si tiene|in programma|manifestazione si|date dell['’]evento)[^\n]*$/.test(prima)) p.dal = d.iso;
   });
   if (p.dal && !p.al) p.al = p.dal;
+
+  p.fasi = estraiFasi(originale, mail.date && !isNaN(mail.date) ? new Date(mail.date.getTime() - mail.date.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : '');
+  p.luogo = lab(/(?:luogo|sede|location)\s*[:\-]\s*([^\n.;]{3,60})/i)
+    || lab(/(?:si terr[àa]|si svolger[àa]|in programma|avr[àa] luogo)[^\n.]*?\s(?:a|ad|presso)\s+((?:[A-ZÀ-Ý][\wà-ÿ']+)(?:\s+(?:di|del|della|sul|in)?\s*[A-ZÀ-Ý][\wà-ÿ']+){0,3})/)
+    || (p.fasi.find(f => f.destinazione?.city)?.destinazione.city || '');
   return p;
 }
 // Titoli dal testo: righe con un EAN13 e (se c'è) una quantità
@@ -744,7 +832,7 @@ function titoliDaFoglio(bytes){
   wb.SheetNames.forEach(sn => {
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: false, defval: '' });
     if (!rows.length) return;
-    let hRow = rows.findIndex(r => r.some(c => /\b(ean|isbn|codice)\b/i.test(String(c))));
+    const hRow = rows.findIndex(r => r.some(c => /\b(ean|isbn|codice)\b/i.test(String(c))));
     const head = hRow >= 0 ? rows[hRow].map(c => String(c).toLowerCase()) : [];
     const ncol = Math.max(...rows.map(r => r.length));
     let cEan = head.findIndex(c => /\b(ean|isbn)\b/.test(c));
@@ -781,6 +869,8 @@ function unisciTitoli(list){
   });
   return [...map.values()];
 }
+// Stesso evento? Confronto sul nome senza anno, punteggiatura e parole generiche
+function chiaveEvento(s){ return String(s || '').toLowerCase().replace(/\b(19|20)\d{2}\b/g, '').replace(/[^a-zà-ù0-9]+/g, ' ').replace(/\b(il|la|di|del|della|de|e)\b/g, ' ').replace(/\s+/g, ' ').trim(); }
 
 /* ═════════ NUOVA PRATICA ═════════ */
 const drop = $('drop');
@@ -802,15 +892,14 @@ async function leggiFile(file){
   try {
     const buf = await file.arrayBuffer();
     const nome = file.name || '';
-    let mail;
-    if (/\.msg$/i.test(nome)) mail = await parseMsg(buf);
-    else mail = parseEml(new TextDecoder('latin1').decode(new Uint8Array(buf)));
+    const mail = /\.msg$/i.test(nome) ? await parseMsg(buf) : parseEml(new TextDecoder('latin1').decode(new Uint8Array(buf)));
     caricaMail(mail, nome);
   } catch (e) {
     console.error(e);
     toast('Impossibile leggere la mail: ' + e.message, 6000);
   }
 }
+function faseVuota(nome = 'Ordine'){ return { nome, document_type: 'restock', inserire_dal: '', inserire_entro: '', consegna_tassativa: '', consegna_fino: '', annullo_dal: '', destinazione: null, note: '', titoli: [] }; }
 function caricaMail(mail, nomeFile){
   const p = estraiParametri(mail);
   let daFogli = [];
@@ -822,68 +911,113 @@ function caricaMail(mail, nomeFile){
     }
   });
   // L'allegato è la fonte principale; dal testo si prendono solo i titoli che l'allegato non ha
-  // (spesso il testo ripete in sintesi i titoli dell'allegato: sommarli raddoppierebbe le copie)
   daFogli = unisciTitoli(daFogli);
   const inFogli = new Set(daFogli.map(t => t.ean));
   const titoli = daFogli.concat(unisciTitoli(titoliDaTesto(mail.text)).filter(t => !inFogli.has(t.ean)));
-  state.nuova = { mail, nomeFile, titoli, cliente: null };
+  const fasi = p.fasi.length ? p.fasi : [faseVuota()];
+  fasi[0].titoli = titoli;
+  state.nuova = { mail, nomeFile, cliente: null, fasi, nota: p.nota };
 
   $('f-evento').value = p.evento; $('f-luogo').value = p.luogo;
-  $('f-dal').value = p.dal; $('f-al').value = p.al; $('f-scad').value = p.scad; $('f-cons').value = p.cons;
+  $('f-dal').value = p.dal; $('f-al').value = p.al;
   $('f-mitt-nome').value = mail.fromName || ''; $('f-mitt-email').value = mail.fromEmail || '';
-  $('f-oggetto').value = mail.subject || ''; $('f-rif').value = p.rif; $('f-note').value = '';
-  $('f-cliente-cerca').value = p.clienteCodice || p.clienteNome || '';
+  $('f-oggetto').value = mail.subject || ''; $('f-rif').value = p.rif; $('f-note').value = p.nota ? 'Integrazione Messaggerie: ' + p.nota.replace(/\s+/g, ' ') : '';
+  $('f-cliente-cerca').value = p.clienteCodice ? (p.clienteNome ? `${p.clienteNome} (${p.clienteCodice})` : p.clienteCodice) : p.clienteNome;
+  state.nuova.clienteLetto = { code: p.clienteCodice, name: p.clienteNome };
   $('f-cliente-sel').classList.add('hidden');
   const ok = (id, v) => { $(id).innerHTML = v ? '<span class="found">dalla mail</span>' : ''; };
-  ok('f-evento-ok', p.evento); ok('f-luogo-ok', p.luogo); ok('f-dal-ok', p.dal); ok('f-al-ok', p.al);
-  ok('f-scad-ok', p.scad); ok('f-cons-ok', p.cons); ok('f-cliente-ok', p.clienteCodice || p.clienteNome);
+  ok('f-evento-ok', p.evento); ok('f-luogo-ok', p.luogo); ok('f-dal-ok', p.dal); ok('f-al-ok', p.al); ok('f-cliente-ok', p.clienteCodice || p.clienteNome);
 
-  const trovati = [p.evento && 'evento', p.luogo && 'luogo', p.dal && 'date evento', p.scad && 'scadenza ordine', p.cons && 'consegna', (p.clienteCodice || p.clienteNome) && 'cliente'].filter(Boolean);
+  const fasiTxt = fasi.map(f => `<b>${esc(f.nome)}</b> (${esc(DOCTYPE_LABEL[f.document_type])}${dateFase(f).map(x => ', ' + x.l.toLowerCase() + ' ' + fmtData(x.d)).join('')}${f.destinazione ? ', destinazione alternativa' : ''})`).join('<br>');
   $('parse-esito').innerHTML = `📨 <b>${esc(mail.subject || nomeFile)}</b>${mail.fromEmail ? ' — da ' + esc(mail.fromName || mail.fromEmail) : ''}<br>
-    Trovati: ${trovati.length ? trovati.join(', ') : 'nessun parametro riconosciuto'} · <b>${titoli.length}</b> titoli (${titoli.reduce((s, t) => s + t.qta, 0)} copie)
+    Cliente: <b>${esc(p.clienteNome || '—')}</b>${p.clienteCodice ? ' · cod. ' + esc(p.clienteCodice) : ''} · <b>${titoli.length}</b> titoli${titoli.length ? ' (' + titoli.reduce((s, t) => s + t.qta, 0) + ' copie)' : ' (nessun elenco nella mail: si aggiungono dopo)'}<br>
+    ${fasi.length > 1 ? fasi.length + ' fasi:' : 'Fase:'}<br>${fasiTxt}
     ${fogli.length ? '<br>Allegati letti: ' + esc(fogli.join(', ')) : ''}
-    <br><span class="muted">Controlla e completa i campi qui sotto prima di creare la pratica.</span>`;
+    <br><span class="muted">Controlla e completa i campi prima di creare la pratica.</span>`;
+  renderIntegrazione(p);
   $('nuova-form').classList.remove('hidden');
-  renderTitoliNuova();
-  if (p.clienteCodice) cercaCliente(p.clienteCodice);
+  renderFasiNuova();
+  if (p.clienteCodice) selezionaCliente(p.clienteCodice, true);
   $('nuova-form').scrollIntoView({ behavior: 'smooth' });
 }
-function renderTitoliNuova(){
-  const t = state.nuova?.titoli || [];
-  $('f-titoli-cnt').textContent = t.length ? `${t.length} titoli · ${t.reduce((s, x) => s + n(x.qta), 0)} copie` : '';
-  $('f-titoli').innerHTML = t.length ? t.map((x, i) => `
-    <tr>
-      <td class="mono">${esc(x.ean)}</td>
-      <td>${esc(x.titolo || '')}${x.info === 'non_trovato' ? ' <span class="pill p-ko">non trovato</span>' : ''}</td>
-      <td>${esc(x.editore || '')}</td>
-      <td class="num"><input type="number" min="1" value="${x.qta}" onchange="state.nuova.titoli[${i}].qta=Math.max(1,+this.value||1);state.nuova.titoli[${i}].qtaIncerta=false;renderTitoliNuova()">
-        ${x.qtaIncerta ? '<span class="pill p-warn" title="Quantità non indicata nella mail">?</span>' : ''}</td>
-      <td><button class="btn btn-sec btn-sm" onclick="state.nuova.titoli.splice(${i},1);renderTitoliNuova()">✕</button></td>
-    </tr>`).join('') : '<tr><td colspan="5" class="empty">Nessun titolo trovato nella mail: aggiungili qui sotto.</td></tr>';
+// Mail di integrazione/aggiornamento: se esiste già la pratica dello stesso evento, proponi di collegarla
+function renderIntegrazione(p){
+  const k = chiaveEvento(p.evento);
+  const simili = k ? state.pratiche.filter(x => { const kx = chiaveEvento(x.evento); return kx && (kx.includes(k) || k.includes(kx)); }) : [];
+  $('integrazione-box').innerHTML = simili.length ? `<div class="banner warn">
+    ${p.integrazione ? '🔁 Questa sembra una <b>mail di integrazione</b>.' : 'ℹ️ Esiste già una pratica per questo evento.'}
+    ${p.nota ? `<div style="margin:6px 0;padding:8px;background:var(--card);border-radius:6px;white-space:pre-wrap;font-size:13px;">${esc(p.nota)}</div>` : ''}
+    ${simili.map(x => `<button class="btn btn-primary btn-sm" style="margin:4px 6px 0 0;" onclick="collegaIntegrazione(${x.id})">Aggiungi alla pratica ${esc(x.numero)} – ${esc(x.evento)}</button>`).join('')}
+    <div class="muted" style="font-size:12px;margin-top:6px;">Oppure completa i campi qui sotto per aprire una pratica nuova.</div></div>` : '';
 }
-$('f-titoli-add-btn').onclick = () => {
-  if (!state.nuova) state.nuova = { mail: {}, titoli: [] };
-  const nuovi = titoliDaTesto($('f-titoli-add').value);
+async function collegaIntegrazione(id){
+  const m = state.nuova.mail || {};
+  const testo = state.nuova.nota || m.text || '';
+  await logEvento(id, 'Mail di integrazione da Messaggerie', `${m.subject || ''}${m.date && !isNaN(m.date) ? ' (' + fmtDataOra(m.date.toISOString()) + ')' : ''}\n${testo}`.trim());
+  toast('Mail registrata nello storico della pratica');
+  state.nuova = null; $('nuova-form').classList.add('hidden');
+  await apriPratica(id); vaiTab('storico');
+}
+
+function inputFase(i, k, label, type = 'date'){
+  const f = state.nuova.fasi[i];
+  return `<div class="field sm"><label>${label}</label><input type="${type}" value="${esc(f[k] || '')}" onchange="state.nuova.fasi[${i}].${k}=this.value"></div>`;
+}
+function renderFasiNuova(){
+  const fasi = state.nuova.fasi;
+  $('f-fasi').innerHTML = fasi.map((f, i) => {
+    const d = f.destinazione;
+    return `<div class="fase-card">
+      <div class="row">
+        <div class="field"><label>Nome fase</label><input type="text" value="${esc(f.nome)}" onchange="state.nuova.fasi[${i}].nome=this.value"></div>
+        <div class="field sm"><label>Tipo ordine</label><select onchange="state.nuova.fasi[${i}].document_type=this.value">${Object.entries(DOCTYPE_LABEL).map(([k, l]) => `<option value="${k}" ${f.document_type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+        ${fasi.length > 1 ? `<button class="btn btn-sec btn-sm" onclick="state.nuova.fasi.splice(${i},1);renderFasiNuova()">Rimuovi fase</button>` : ''}
+      </div>
+      <div class="row" style="margin-top:10px;">${DATE_FASE.map(([k, l]) => inputFase(i, k, l)).join('')}</div>
+      <label style="display:flex;gap:6px;align-items:center;margin-top:10px;"><input type="checkbox" ${d ? 'checked' : ''} onchange="state.nuova.fasi[${i}].destinazione=this.checked?{companyName:'',address:'',postalCode:'',city:'',province:'',country:'IT',phone:'',email:''}:null;renderFasiNuova()"> Destinazione alternativa (es. sede del festival)</label>
+      ${d ? `<div class="row" style="margin-top:8px;">
+        ${['companyName:Ragione sociale / presso:lg', 'address:Indirizzo:lg', 'postalCode:CAP:sm', 'city:Località:', 'province:Prov.:sm'].map(s => { const [k, l, c] = s.split(':'); return `<div class="field ${c}"><label>${l}</label><input type="text" value="${esc(d[k] || '')}" onchange="state.nuova.fasi[${i}].destinazione.${k}=this.value"></div>`; }).join('')}
+      </div>${d._raw ? `<div class="muted" style="font-size:12px;margin-top:4px;">Dalla mail: “${esc(d._raw)}”</div>` : ''}` : ''}
+      <div class="field" style="margin-top:10px;"><label>Note della fase</label><input type="text" value="${esc(f.note || '')}" onchange="state.nuova.fasi[${i}].note=this.value"></div>
+      <div class="tbl-wrap" style="margin-top:10px;"><table>
+        <thead><tr><th>EAN</th><th>Titolo</th><th>Editore</th><th class="num">Copie</th><th></th></tr></thead>
+        <tbody>${f.titoli.length ? f.titoli.map((x, j) => `<tr>
+          <td class="mono">${esc(x.ean)}</td>
+          <td>${esc(x.titolo || '')}${x.info === 'non_trovato' ? ' <span class="pill p-ko">non trovato</span>' : ''}</td>
+          <td>${esc(x.editore || '')}</td>
+          <td class="num"><input type="number" min="1" value="${x.qta}" onchange="const t=state.nuova.fasi[${i}].titoli[${j}];t.qta=Math.max(1,+this.value||1);t.qtaIncerta=false;renderFasiNuova()">
+            ${x.qtaIncerta ? '<span class="pill p-warn" title="Quantità non indicata nella mail">?</span>' : ''}</td>
+          <td><button class="btn btn-sec btn-sm" onclick="state.nuova.fasi[${i}].titoli.splice(${j},1);renderFasiNuova()">✕</button></td>
+        </tr>`).join('') : '<tr><td colspan="5" class="muted" style="text-align:center;padding:14px;">Nessun titolo: si possono aggiungere ora o dopo.</td></tr>'}</tbody>
+      </table></div>
+      <div class="row" style="margin-top:8px;align-items:flex-start;">
+        <div class="field lg"><textarea id="f-add-${i}" rows="2" placeholder="Aggiungi titoli: uno per riga, EAN e copie (es. 9788807035012 5)"></textarea></div>
+        <button class="btn btn-sec btn-sm" onclick="aggiungiTitoliNuova(${i})">Aggiungi</button>
+      </div>
+    </div>`; }).join('');
+}
+function aggiungiTitoliNuova(i){
+  const nuovi = titoliDaTesto($('f-add-' + i).value);
   if (!nuovi.length) { toast('Nessun EAN valido trovato.'); return; }
-  state.nuova.titoli = unisciTitoli(state.nuova.titoli.concat(nuovi));
-  $('f-titoli-add').value = '';
-  renderTitoliNuova();
-};
+  state.nuova.fasi[i].titoli = unisciTitoli(state.nuova.fasi[i].titoli.concat(nuovi));
+  renderFasiNuova();
+}
+$('f-fase-add').onclick = () => { state.nuova.fasi.push(faseVuota('Fase ' + (state.nuova.fasi.length + 1))); renderFasiNuova(); };
 $('f-titoli-info-btn').onclick = async () => {
-  const t = state.nuova?.titoli || [];
+  const t = (state.nuova?.fasi || []).flatMap(f => f.titoli);
+  if (!t.length) { toast('Nessun titolo da completare.'); return; }
   if (!state.meli?.connected) { toast('Collega prima l\'account Messaggerie in BookUp → Accessi.', 5000); return; }
   const btn = $('f-titoli-info-btn'); btn.disabled = true;
-  let i = 0;
+  let k = 0;
   await mapConcorrenza(t, 6, async x => {
     const info = await infoTitolo(x.ean);
     if (info) { x.titolo = info.title || x.titolo; x.editore = info.publisher || x.editore; x.autore = info.author || ''; x.info = 'ok'; }
     else x.info = 'non_trovato';
-    btn.textContent = `Recupero… ${++i}/${t.length}`;
+    btn.textContent = `Recupero… ${++k}/${t.length}`;
   });
   btn.disabled = false; btn.textContent = 'Recupera titolo/editore';
-  renderTitoliNuova();
+  renderFasiNuova();
 };
-document.querySelectorAll('input[name=dest]').forEach(r => r.onchange = () => $('f-dest').classList.toggle('hidden', r.value !== 'altra' || !r.checked));
 
 // Ricerca cliente su entrambe le utenze Messaggerie (come BookUp)
 let _cercaTok = 0;
@@ -891,7 +1025,8 @@ async function cercaCliente(raw){
   raw = (raw || '').trim();
   const dd = $('f-cliente-dd');
   if (!raw) return;
-  if (/^\d+$/.test(raw)) { dd.classList.add('hidden'); return selezionaCliente(raw); }
+  const cod = raw.match(/\b(\d{5,10})\b/);
+  if (cod) { dd.classList.add('hidden'); return selezionaCliente(cod[1]); }
   const tok = ++_cercaTok;
   dd.innerHTML = '<div class="dd-item muted">Ricerca in corso…</div>'; dd.classList.remove('hidden');
   const res = await Promise.all(RIF_ACCOUNT_IDS.map(account =>
@@ -907,82 +1042,85 @@ async function cercaCliente(raw){
 $('f-cliente-btn').onclick = () => cercaCliente($('f-cliente-cerca').value);
 $('f-cliente-cerca').addEventListener('keydown', e => { if (e.key === 'Enter') cercaCliente(e.target.value); });
 document.addEventListener('click', e => { if (!e.target.closest('.dropdown')) $('f-cliente-dd').classList.add('hidden'); });
-async function selezionaCliente(code){
+async function selezionaCliente(code, silenzioso){
   const box = $('f-cliente-sel');
-  box.classList.remove('hidden'); box.className = 'banner info'; box.textContent = 'Verifica cliente su Messaggerie…';
+  const letto = state.nuova.clienteLetto?.code === code ? state.nuova.clienteLetto.name : '';
+  state.nuova.cliente = { code, name: letto, account: null };
+  if (!puoInviare()) {
+    box.className = 'banner warn';
+    box.innerHTML = `Cliente <b>${esc(letto || code)}</b> · cod. <span class="mono">${esc(code)}</span> — non verificato su Messaggerie (serve l'accesso RPN amministratore). La pratica si può creare comunque.`;
+    return;
+  }
+  box.className = 'banner info'; box.textContent = 'Verifica cliente su Messaggerie…';
   let data = null, account = null, lastErr = null;
   for (const a of RIF_ACCOUNT_IDS) {
     try { data = await rpnApi(`rifornimento-cliente?account=${a}&customerCode=${encodeURIComponent(code)}`); account = a; break; }
     catch (e) { lastErr = e; }
   }
   if (!data) {
-    // Senza accesso RPN il codice resta comunque salvato: l'ordine si invierà dopo
-    state.nuova.cliente = { code, name: '', account: null };
     box.className = 'banner warn';
-    box.innerHTML = `Cliente <b>${esc(code)}</b> non verificato (${esc(lastErr?.message || 'errore')}). Puoi creare comunque la pratica.`;
+    box.innerHTML = `Cliente <b>${esc(letto || code)}</b> non verificato (${esc(lastErr?.message || 'errore')}). Puoi creare comunque la pratica.`;
     return;
   }
   const c = data.cliente || {};
-  const nome = c.businessName || c.name || c.description || '';
+  const nome = c.businessName || c.name || c.description || letto;
   const indirizzo = [c.address, c.postalCode || c.zipCode || c.cap, c.city, c.province].filter(Boolean).join(', ');
   state.nuova.cliente = { code, name: nome, account, indirizzo };
   $('f-cliente-cerca').value = nome ? `${nome} (${code})` : code;
   box.className = 'banner ok';
-  box.innerHTML = `✓ <b>${esc(nome || code)}</b> · cod. <span class="mono">${esc(code)}</span>${indirizzo ? '<br>' + esc(indirizzo) : ''}`;
+  box.innerHTML = `✓ <b>${esc(nome || code)}</b> · cod. <span class="mono">${esc(code)}</span>${indirizzo ? '<br>Sede: ' + esc(indirizzo) : ''}`;
 }
 
-function raccogliNuova(){
+function pulisciDest(d){
+  if (!d) return null;
+  const { _raw, ...x } = d;
+  return (x.companyName || x.address) ? x : null;
+}
+async function creaPratica(){
   const err = $('f-err'); err.textContent = '';
   const evento = $('f-evento').value.trim();
-  if (!evento) { err.textContent = 'Indica il nome dell\'evento.'; return null; }
-  const t = state.nuova?.titoli || [];
-  if (!t.length) { err.textContent = 'Nessun titolo: aggiungi almeno un EAN con le copie.'; return null; }
-  const cli = state.nuova.cliente;
-  let codice = cli?.code || '';
-  if (!codice && /^\d{4,10}$/.test($('f-cliente-cerca').value.trim())) codice = $('f-cliente-cerca').value.trim();
-  let destinazione = null;
-  if (document.querySelector('input[name=dest]:checked').value === 'altra') {
-    destinazione = { companyName: $('d-nome').value.trim(), address: $('d-indirizzo').value.trim(), postalCode: $('d-cap').value.trim(),
-      city: $('d-citta').value.trim(), province: $('d-prov').value.trim().toUpperCase(), country: 'IT', phone: $('d-tel').value.trim(), email: $('d-email').value.trim() };
-    if (!destinazione.companyName || !destinazione.address) { err.textContent = 'Per l\'altra destinazione servono ragione sociale e indirizzo.'; return null; }
+  if (!evento) { err.textContent = 'Indica il nome dell\'evento.'; return; }
+  const fasi = state.nuova.fasi;
+  for (const f of fasi) {
+    if (!f.nome.trim()) { err.textContent = 'Ogni fase deve avere un nome.'; return; }
+    if (f.destinazione && (!f.destinazione.companyName || !f.destinazione.address)) { err.textContent = `Fase "${f.nome}": per la destinazione alternativa servono ragione sociale e indirizzo.`; return; }
   }
+  const cli = state.nuova.cliente;
+  const codice = cli?.code || ($('f-cliente-cerca').value.match(/\b(\d{5,10})\b/) || [])[1] || null;
   const m = state.nuova.mail || {};
-  return {
-    pratica: {
-      evento, luogo: $('f-luogo').value.trim() || null,
-      data_inizio: $('f-dal').value || null, data_fine: $('f-al').value || null,
-      scadenza_ordine: $('f-scad').value || null, scadenza_consegna: $('f-cons').value || null,
-      cliente_nome: cli?.name || (codice ? null : $('f-cliente-cerca').value.trim() || null), cliente_codice: codice || null, cliente_account: cli?.account || null,
-      document_type: $('f-doctype').value, order_reference: $('f-rif').value.trim() || null, destinazione,
-      mitt_nome: $('f-mitt-nome').value.trim() || null, mitt_email: $('f-mitt-email').value.trim() || null,
-      mail_oggetto: $('f-oggetto').value.trim() || null, mail_data: m.date && !isNaN(m.date) ? m.date.toISOString() : null,
-      mail_testo: m.text || null, mail_file_nome: state.nuova.nomeFile || null, note: $('f-note').value.trim() || null,
-    },
-    righe: t.map(x => ({ ean: x.ean, titolo: x.titolo || null, autore: x.autore || null, editore: x.editore || null, qta_richiesta: n(x.qta) })),
+  const pratica = {
+    evento, luogo: $('f-luogo').value.trim() || null, data_inizio: $('f-dal').value || null, data_fine: $('f-al').value || null,
+    cliente_nome: cli?.name || state.nuova.clienteLetto?.name || (codice ? null : $('f-cliente-cerca').value.trim() || null),
+    cliente_codice: codice, cliente_account: cli?.account || null, order_reference: $('f-rif').value.trim() || null,
+    mitt_nome: $('f-mitt-nome').value.trim() || null, mitt_email: $('f-mitt-email').value.trim() || null,
+    mail_oggetto: $('f-oggetto').value.trim() || null, mail_data: m.date && !isNaN(m.date) ? m.date.toISOString() : null,
+    mail_testo: m.text || null, mail_file_nome: state.nuova.nomeFile || null, note: $('f-note').value.trim() || null,
   };
-}
-async function creaPratica(invia){
-  const dati = raccogliNuova(); if (!dati) return;
-  if (invia && !dati.pratica.cliente_codice) { $('f-err').textContent = 'Per inviare l\'ordine serve il codice cliente Messaggerie.'; return; }
-  ['f-crea', 'f-crea-invia'].forEach(id => $(id).disabled = true);
+  $('f-crea').disabled = true;
   try {
-    const { data: p, error } = await sb.from('ff_pratiche').insert(dati.pratica).select().single();
+    const { data: p, error } = await sb.from('ff_pratiche').insert(pratica).select().single();
     if (error) throw error;
-    const { error: e2 } = await sb.from('ff_righe').insert(dati.righe.map(r => ({ ...r, pratica_id: p.id })));
-    if (e2) throw e2;
-    await logEvento(p.id, 'Pratica creata dalla mail', `${dati.righe.length} titoli, ${dati.righe.reduce((s, r) => s + r.qta_richiesta, 0)} copie${dati.pratica.mail_file_nome ? ' · ' + dati.pratica.mail_file_nome : ''}`);
+    const { data: fasiDb, error: e1 } = await sb.from('ff_fasi').insert(fasi.map((f, i) => ({
+      pratica_id: p.id, posizione: i + 1, nome: f.nome.trim(), document_type: f.document_type,
+      inserire_dal: f.inserire_dal || null, inserire_entro: f.inserire_entro || null, consegna_tassativa: f.consegna_tassativa || null,
+      consegna_fino: f.consegna_fino || null, annullo_dal: f.annullo_dal || null, destinazione: pulisciDest(f.destinazione), note: f.note || null,
+    }))).select();
+    if (e1) throw e1;
+    fasiDb.sort((a, b) => a.posizione - b.posizione);
+    const righe = fasi.flatMap((f, i) => f.titoli.map(x => ({ pratica_id: p.id, fase_id: fasiDb[i].id, ean: x.ean, titolo: x.titolo || null, autore: x.autore || null, editore: x.editore || null, qta_richiesta: n(x.qta) })));
+    if (righe.length) { const { error: e2 } = await sb.from('ff_righe').insert(righe); if (e2) throw e2; }
+    await logEvento(p.id, 'Pratica creata dalla mail', `${fasi.length} fasi (${fasi.map(f => f.nome).join(', ')}) · ${righe.length} titoli${pratica.mail_file_nome ? ' · ' + pratica.mail_file_nome : ''}`);
     toast(`Pratica ${p.numero} creata`);
     state.nuova = null; $('nuova-form').classList.add('hidden');
+    await caricaElenco();
     await apriPratica(p.id);
-    if (invia) inviaOrdinePrincipale();
   } catch (e) {
-    $('f-err').textContent = 'Errore: ' + e.message;
+    err.textContent = 'Errore: ' + e.message;
   } finally {
-    ['f-crea', 'f-crea-invia'].forEach(id => $(id).disabled = false);
+    $('f-crea').disabled = false;
   }
 }
-$('f-crea').onclick = () => creaPratica(false);
-$('f-crea-invia').onclick = () => creaPratica(true);
+$('f-crea').onclick = creaPratica;
 $('f-annulla').onclick = () => { state.nuova = null; $('nuova-form').classList.add('hidden'); };
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1008,7 +1146,7 @@ async function infoTitolo(ean){
 }
 const keyEditore = p => String(p || '').trim().toUpperCase().replace(/\s+/g, ' ');
 // Smista gli EAN sulle utenze Messaggerie in base all'editore (cache verificata + probe per gli editori nuovi)
-async function instrada(items, p, log){
+async function instrada(items, p, fase, log){
   const senzaEditore = items.filter(x => !x.editore);
   if (senzaEditore.length) {
     log(`🔎 Recupero editore di ${senzaEditore.length} titoli…`);
@@ -1027,7 +1165,7 @@ async function instrada(items, p, log){
     await mapConcorrenza(daProbe, 4, async ed => {
       const ean = items.find(x => x.editore === ed).ean;
       try {
-        const pr = await rpnApi('rifornimento-editore-probe', { method: 'POST', body: JSON.stringify({ editore: ed, ean, customerCode: p.cliente_codice, documentType: p.document_type }) });
+        const pr = await rpnApi('rifornimento-editore-probe', { method: 'POST', body: JSON.stringify({ editore: ed, ean, customerCode: p.cliente_codice, documentType: fase.document_type }) });
         if (pr.account) routing[keyEditore(ed)] = pr.account;
       } catch (_e) {}
     });
@@ -1055,46 +1193,50 @@ async function recuperaNumeri(ordini, tentativi = 12, attesa = 4000){
     if (ordini.some(o => !o.numero_interno) && t < tentativi - 1) await sleep(attesa);
   }
 }
-// Invia a Messaggerie le quantità indicate. tipo: 'principale' | 'recupero'
+function riferimentoOrdine(p, fase, tipo){
+  const base = p.order_reference || p.numero;
+  return base + (state.pr.fasi.length > 1 ? '-F' + fase.posizione : '') + (tipo === 'recupero' ? ' REC' : '');
+}
+// Invia a Messaggerie le quantità indicate per la fase corrente. tipo: 'principale' | 'recupero'
 async function inviaOrdini(items, tipo, log){
-  const p = state.pr.p;
+  const p = state.pr.p, fase = faseCorrente();
   if (!puoInviare()) throw new Error('Serve l\'accesso RPN amministratore (collegalo in BookUp → Accessi).');
   if (!p.cliente_codice) throw new Error('Manca il codice cliente: inseriscilo in "Modifica dati".');
-  const { gruppi, bloccati } = await instrada(items, p, log);
+  const { gruppi, bloccati } = await instrada(items, p, fase, log);
   // Aggiorna titolo/editore recuperati durante l'instradamento
   for (const x of items.filter(x => x._aggiorna)) {
-    await sb.from('ff_righe').update({ editore: x.editore, titolo: x.titolo }).eq('pratica_id', p.id).eq('ean', x.ean);
+    await sb.from('ff_righe').update({ editore: x.editore, titolo: x.titolo }).eq('fase_id', fase.id).eq('ean', x.ean);
   }
   if (bloccati.length) log(`<span style="color:var(--ko)">⚠️ ${bloccati.length} titoli non inviabili: ${bloccati.map(b => esc(b.ean) + ' (' + esc(b.motivo) + ')').join(', ')}</span>`);
   const creati = [];
+  const ref = riferimentoOrdine(p, fase, tipo);
   for (const [account, righe] of Object.entries(gruppi)) {
     const copie = righe.reduce((s, r) => s + r.qta, 0);
-    log(`📤 Invio ordine ${tipo === 'recupero' ? 'di recupero ' : ''}(${righe.length} titoli, ${copie} copie)…`);
+    log(`📤 Invio ordine ${tipo === 'recupero' ? 'di recupero ' : ''}${esc(DOCTYPE_LABEL[fase.document_type])} (${righe.length} titoli, ${copie} copie)…`);
     const res = await rpnApi('rifornimento-order', {
       method: 'POST',
       body: JSON.stringify({
-        account, customerCode: p.cliente_codice, documentType: p.document_type,
-        orderReference: (p.order_reference || p.numero) + (tipo === 'recupero' ? ' REC' : ''),
-        notes: `PDE Festival ${p.numero} - ${p.evento}`.slice(0, 200),
+        account, customerCode: p.cliente_codice, documentType: fase.document_type, orderReference: ref,
+        notes: `PDE Festival ${p.numero} - ${p.evento} - ${fase.nome}`.slice(0, 200),
         items: righe.map(r => ({ ean: r.ean, quantity: r.qta, notes: '' })),
-        destination: p.destinazione || null,
+        destination: fase.destinazione || null,
       }),
     });
     const { data: o, error } = await sb.from('ff_ordini').insert({
-      pratica_id: p.id, tipo, account, batch_id: res.batchId || null, numero_interno: res.orderNumber ? String(res.orderNumber) : null,
-      document_type: p.document_type, copie, titoli: righe.length, righe: righe.map(r => ({ ean: r.ean, qta: r.qta })),
+      pratica_id: p.id, fase_id: fase.id, tipo, account, batch_id: res.batchId || null, numero_interno: res.orderNumber ? String(res.orderNumber) : null,
+      document_type: fase.document_type, copie, titoli: righe.length, righe: righe.map(r => ({ ean: r.ean, qta: r.qta })),
     }).select().single();
     if (error) log(`<span style="color:var(--ko)">Ordine inviato ma non registrato nella pratica: ${esc(error.message)} (BatchID ${res.batchId})</span>`);
     else { creati.push(o); state.pr.ordini.push(o); }
     // Anche nello storico "Ordini inviati" di BookUp (il cron completa il N. ordine interno)
-    await sb.from('rifornimento_ordini_inviati').insert({ account, batch_id: Number(res.batchId), customer_code: p.cliente_codice, document_type: p.document_type,
-      order_reference: (p.order_reference || p.numero) + (tipo === 'recupero' ? ' REC' : ''), copie, titoli: righe.length, origine: 'festival' }).then(() => {}, () => {});
+    await sb.from('rifornimento_ordini_inviati').insert({ account, batch_id: Number(res.batchId), customer_code: p.cliente_codice, document_type: fase.document_type,
+      order_reference: ref, copie, titoli: righe.length, origine: 'festival' }).then(() => {}, () => {});
   }
   if (creati.length) {
     log('🔄 Recupero numero ordine Messaggerie…');
     await recuperaNumeri(creati);
     creati.forEach(o => log(o.numero_interno ? `✅ Ordine <b>N. ${esc(o.numero_interno)}</b> — ${o.copie} copie su ${o.titoli} titoli` : `✅ Ordine inviato (BatchID ${o.batch_id}) — numero in arrivo, si aggiornerà da solo`));
-    await logEvento(p.id, tipo === 'recupero' ? 'Ordine di recupero inviato' : 'Ordine inserito su Messaggerie',
+    await logEvento(p.id, (tipo === 'recupero' ? 'Ordine di recupero inviato' : 'Ordine inserito su Messaggerie') + ' · ' + fase.nome,
       creati.map(o => `${o.numero_interno ? 'N. ' + o.numero_interno : 'BatchID ' + o.batch_id} · ${o.copie} copie`).join(' | ') + (bloccati.length ? ` · ${bloccati.length} titoli non inviabili` : ''));
     await sb.from('ff_pratiche').update({ stato: tipo === 'recupero' ? 'in_recupero' : (p.stato === 'nuova' ? 'ordinata' : p.stato) }).eq('id', p.id);
   }
@@ -1106,10 +1248,10 @@ async function inviaOrdini(items, tipo, log){
    ═══════════════════════════════════════════════════════════════════════ */
 async function verificaEvasione(log){
   if (!state.meli?.connected) throw new Error('Serve l\'account Messaggerie Libri collegato (BookUp → Accessi).');
-  const { ordini } = state.pr;
+  const ordini = ordiniFase();
   await recuperaNumeri(ordini, 1, 0);
   const conNumero = ordini.filter(o => o.numero_interno);
-  if (!conNumero.length) throw new Error('Nessun ordine ha ancora il numero Messaggerie: riprova tra qualche minuto.');
+  if (!conNumero.length) throw new Error('Nessun ordine di questa fase ha ancora il numero Messaggerie: riprova tra qualche minuto.');
   for (const o of conNumero) {
     log(`🔎 Ordine ${esc(o.numero_interno)}…`);
     let nOrdine = o.n_ordine;
@@ -1131,32 +1273,32 @@ async function verificaEvasione(log){
     const righe = (o.righe || []).map(r => ({ ...r, ...(perEan[r.ean] || {}) }));
     o.righe = righe; o.n_ordine = String(nOrdine); o.verificato_at = new Date().toISOString();
     await sb.from('ff_ordini').update({ righe, n_ordine: o.n_ordine, verificato_at: o.verificato_at }).eq('id', o.id);
-    const ev = righe.reduce((s, r) => s + n(r.evaso), 0), inv = righe.reduce((s, r) => s + n(r.inevaso), 0);
-    log(`✅ ${esc(o.numero_interno)}: evaso ${ev}, inevaso ${inv}`);
+    log(`✅ ${esc(o.numero_interno)}: evaso ${righe.reduce((s, r) => s + n(r.evaso), 0)}, inevaso ${righe.reduce((s, r) => s + n(r.inevaso), 0)}`);
   }
   await ricalcolaRighe();
-  await logEvento(state.pr.p.id, 'Verifica evasione', state.pr.righe.filter(r => r.qta_inevasa > 0).length + ' titoli con inevaso aperto');
+  await logEvento(state.pr.p.id, 'Verifica evasione · ' + faseCorrente().nome, righeFase().filter(r => r.qta_inevasa > 0).length + ' titoli con inevaso aperto');
 }
-// Per ogni EAN: ordinato, evaso, inevaso aperto = Σ inevaso − copie già rimesse in ordini di recupero
-function aggregaRiga(ean){
+// Per un titolo di una fase: ordinato, evaso, inevaso aperto = Σ inevaso − copie già rimesse in ordini di recupero
+function aggregaRiga(r){
   const out = { ordinato: 0, evaso: 0, inevasoTot: 0, recupero: 0, inAttesa: 0, motivo: '', stato: '', verificato: false };
-  state.pr.ordini.forEach(o => (o.righe || []).forEach(r => {
-    if (r.ean !== ean) return;
-    out.ordinato += n(r.qta);
-    if (o.tipo === 'recupero') out.recupero += n(r.qta);
-    if (o.verificato_at && ('evaso' in r || 'inevaso' in r)) {
-      out.verificato = true; out.evaso += n(r.evaso); out.inevasoTot += n(r.inevaso);
-      if (r.motivo) out.motivo = r.motivo; if (r.stato) out.stato = r.stato;
-    } else out.inAttesa += n(r.qta);
+  state.pr.ordini.filter(o => o.fase_id === r.fase_id).forEach(o => (o.righe || []).forEach(x => {
+    if (x.ean !== r.ean) return;
+    out.ordinato += n(x.qta);
+    if (o.tipo === 'recupero') out.recupero += n(x.qta);
+    if (o.verificato_at && ('evaso' in x || 'inevaso' in x)) {
+      out.verificato = true; out.evaso += n(x.evaso); out.inevasoTot += n(x.inevaso);
+      if (x.motivo) out.motivo = x.motivo; if (x.stato) out.stato = x.stato;
+    } else out.inAttesa += n(x.qta);
   }));
   // Le copie rimesse in recupero non sono più "aperte"; se il recupero a sua volta
   // resta inevaso, quella quantità rientra in inevasoTot alla verifica successiva.
   out.inevasoAperto = Math.max(0, out.inevasoTot - out.recupero);
+  out.daOrdinare = Math.max(0, r.qta_richiesta - (out.ordinato - out.recupero));
   return out;
 }
 async function ricalcolaRighe(){
   for (const r of state.pr.righe) {
-    const a = aggregaRiga(r.ean);
+    const a = aggregaRiga(r);
     const upd = { qta_evasa: a.verificato ? a.evaso : null, qta_inevasa: a.verificato ? a.inevasoAperto : null, motivo_inevaso: a.motivo || null, stato_lavorazione: a.stato || null, verificato_at: a.verificato ? new Date().toISOString() : null };
     if (a.inevasoAperto > 0 && !r.ristampa) upd.ristampa = 'da_verificare';
     Object.assign(r, upd);
@@ -1165,52 +1307,69 @@ async function ricalcolaRighe(){
 }
 
 /* ═════════ DETTAGLIO PRATICA ═════════ */
+function faseCorrente(){ return state.pr.fasi.find(f => f.id === state.pr.faseId) || state.pr.fasi[0]; }
+function righeFase(){ const f = faseCorrente(); return state.pr.righe.filter(r => r.fase_id === f?.id); }
+function ordiniFase(){ const f = faseCorrente(); return state.pr.ordini.filter(o => o.fase_id === f?.id); }
 async function apriPratica(id){
-  const [{ data: p, error }, { data: righe }, { data: ordini }, { data: eventi }] = await Promise.all([
+  const [{ data: p, error }, { data: fasi }, { data: righe }, { data: ordini }, { data: eventi }] = await Promise.all([
     sb.from('ff_pratiche').select('*').eq('id', id).single(),
+    sb.from('ff_fasi').select('*').eq('pratica_id', id).order('posizione'),
     sb.from('ff_righe').select('*').eq('pratica_id', id).order('id'),
     sb.from('ff_ordini').select('*').eq('pratica_id', id).order('created_at'),
     sb.from('ff_eventi').select('*').eq('pratica_id', id).order('created_at', { ascending: false }),
   ]);
   if (error) { toast('Pratica non trovata: ' + error.message); return; }
-  state.pr = { p, righe: righe || [], ordini: ordini || [], eventi: eventi || [], tab: state.pr?.p?.id === id ? state.pr.tab : 'titoli', sel: new Set() };
+  const stessa = state.pr?.p?.id === id;
+  state.pr = { p, fasi: fasi || [], righe: righe || [], ordini: ordini || [], eventi: eventi || [],
+    tab: stessa ? state.pr.tab : 'titoli', faseId: stessa && (fasi || []).some(f => f.id === state.pr.faseId) ? state.pr.faseId : (fasi || [])[0]?.id };
   mostra('pratica');
   history.replaceState(null, '', '#pratica=' + id);
   renderPratica();
   // Numeri d'ordine ancora mancanti: prova a recuperarli in background
   if (state.pr.ordini.some(o => !o.numero_interno && o.batch_id)) recuperaNumeri(state.pr.ordini, 3, 4000).then(() => state.pr?.p.id === id && renderPratica());
 }
-function fasi(){
-  const { p, righe, ordini } = state.pr;
+function fasiProcesso(){
+  const { p } = state.pr;
+  const fase = faseCorrente();
+  if (!fase) return { s: [], azione: { t: 'Aggiungi una fase per iniziare.', b: ['+ Fase', 'nuovaFase()', 'btn-primary'] } };
+  const righe = righeFase(), ordini = ordiniFase();
   const princ = ordini.filter(o => o.tipo === 'principale');
-  const daOrdinare = righe.filter(r => { const a = aggregaRiga(r.ean); return r.qta_richiesta - (a.ordinato - a.recupero) > 0; });
+  const daOrdinare = righe.filter(r => aggregaRiga(r).daOrdinare > 0);
   const comunicato = princ.length && princ.every(o => o.comunicato_at);
   const verificato = ordini.length && ordini.every(o => o.verificato_at);
   const inevaso = righe.reduce((s, r) => s + n(r.qta_inevasa), 0);
   const s = [
     { t: 'Mail ricevuta', ok: true },
+    { t: 'Titoli raccolti', ok: righe.length > 0 },
     { t: 'Ordine inserito', ok: princ.length > 0 && !daOrdinare.length },
     { t: 'Comunicato a Messaggerie', ok: !!comunicato },
     { t: 'Evasione verificata', ok: !!verificato },
     { t: 'Inevasi recuperati', ok: !!verificato && inevaso === 0 },
-    { t: 'Chiusa', ok: p.stato === 'chiusa' },
   ];
+  const oggi = oggiIso();
   let azione;
   if (p.stato === 'chiusa') azione = { t: 'Pratica chiusa.', b: null };
-  else if (!princ.length || daOrdinare.length) azione = { t: `<b>Inserisci l'ordine su Messaggerie</b> per ${daOrdinare.length || righe.length} titoli${p.scadenza_ordine ? ' — scadenza ' + fmtData(p.scadenza_ordine) : ''}.`, b: ['Invia ordine a Messaggerie', 'inviaOrdinePrincipale()', 'btn-ok'] };
+  else if (!righe.length) azione = { t: `<b>Raccogli i titoli</b> per la fase "${esc(fase.nome)}" da colleghi, agenti ed editori${fase.inserire_entro ? ' — da inserire entro il ' + fmtData(fase.inserire_entro) : ''}.`, b: ['+ Titoli', 'aggiungiTitoli()', 'btn-primary'] };
+  else if (daOrdinare.length) {
+    const presto = fase.inserire_dal && oggi < fase.inserire_dal;
+    azione = { t: presto ? `I titoli sono pronti, ma per questa fase gli ordini si inseriscono <b>dal ${fmtData(fase.inserire_dal)}</b>.`
+      : `<b>Inserisci l'ordine ${esc(DOCTYPE_LABEL[fase.document_type])}</b> per ${daOrdinare.length} titoli${fase.inserire_entro ? ' — entro il ' + fmtData(fase.inserire_entro) : ''}.`,
+      b: ['Invia ordine a Messaggerie', 'inviaOrdinePrincipale()', presto ? 'btn-sec' : 'btn-ok'] };
+  }
   else if (princ.some(o => !o.numero_interno)) azione = { t: 'In attesa del numero ordine da Messaggerie.', b: ['Aggiorna numero ordine', 'aggiornaNumeri()', 'btn-sec'] };
-  else if (!comunicato) azione = { t: '<b>Comunica a Messaggerie l\'avvenuto inserimento</b> con il numero d\'ordine.', b: ['Prepara la mail', "vaiTab('mail')", 'btn-primary'] };
+  else if (!comunicato) azione = { t: '<b>Comunica a Messaggerie il numero di riferimento</b> dell\'ordine inserito.', b: ['Prepara la mail', "vaiTab('mail')", 'btn-primary'] };
   else if (!verificato) azione = { t: '<b>Verifica l\'evasione</b>: quante copie sono state evase e quali sono rimaste inevase.', b: ['Verifica evasione', 'eseguiVerifica()', 'btn-primary'] };
-  else if (inevaso > 0) azione = { t: `<b>${inevaso} copie inevase</b>: verifica le ristampe con gli editori e rimetti in ordine le quantità recuperabili.`, b: ['Ordine di recupero inevasi', "vaiTab('titoli');apriRecupero()", 'btn-ok'] };
+  else if (inevaso > 0) azione = { t: `<b>${inevaso} copie inevase</b>: verifica le ristampe con gli editori e rimetti in ordine le quantità recuperabili${fase.annullo_dal ? ' (le righe aperte vengono annullate dal ' + fmtData(fase.annullo_dal) + ')' : ''}.`, b: ['Ordine di recupero inevasi', "vaiTab('titoli');apriRecupero()", 'btn-ok'] };
+  else if (state.pr.fasi.length > 1 && state.pr.fasi.some(f => f.id !== fase.id && !state.pr.ordini.some(o => o.fase_id === f.id))) azione = { t: 'Questa fase è completa. Passa alla fase successiva.', b: null };
   else azione = { t: 'Tutto evaso: puoi chiudere la pratica.', b: ['Chiudi pratica', "cambiaStato('chiusa')", 'btn-primary'] };
   return { s, azione };
 }
+function destTesto(d){ return d ? [d.companyName, d.address, d.postalCode, d.city, d.province].filter(Boolean).join(', ') : 'sede del cliente'; }
 function renderPratica(){
-  const { p, righe, ordini } = state.pr;
-  const { s, azione } = fasi();
+  const { p, fasi } = state.pr;
+  const fase = faseCorrente();
+  const { s, azione } = fasiProcesso();
   const cur = s.findIndex(x => !x.ok);
-  const copie = righe.reduce((a, r) => a + n(r.qta_richiesta), 0);
-  const dest = p.destinazione ? [p.destinazione.companyName, p.destinazione.address, p.destinazione.postalCode, p.destinazione.city, p.destinazione.province].filter(Boolean).join(', ') : 'sede del cliente';
   $('view-pratica').innerHTML = `
     <div style="margin-bottom:10px;"><button class="btn btn-sec btn-sm" onclick="mostra('elenco');caricaElenco()">← Pratiche</button></div>
     <div class="card">
@@ -1222,13 +1381,7 @@ function renderPratica(){
             ${p.luogo ? `<span><b>Luogo</b>${esc(p.luogo)}</span>` : ''}
             ${p.data_inizio ? `<span><b>Date</b>${fmtData(p.data_inizio)}${p.data_fine && p.data_fine !== p.data_inizio ? ' – ' + fmtData(p.data_fine) : ''}</span>` : ''}
             <span><b>Cliente</b>${esc(p.cliente_nome || '')} <span class="mono">${esc(p.cliente_codice || '—')}</span></span>
-            <span><b>Tipo</b>${esc(DOCTYPE_LABEL[p.document_type] || p.document_type)}</span>
-            <span><b>Destinazione</b>${esc(dest)}</span>
-          </div>
-          <div class="pr-meta">
-            <span><b>Scadenza ordine</b>${ordini.length ? fmtData(p.scadenza_ordine) : scadHtml(p.scadenza_ordine)}</span>
-            <span><b>Consegna entro</b>${scadHtml(p.scadenza_consegna, p.stato === 'chiusa')}</span>
-            <span><b>Titoli</b>${righe.length} · ${fmtN(copie)} copie</span>
+            <span><b>Riferimento</b><span class="mono">${esc(p.order_reference || p.numero)}</span></span>
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1236,13 +1389,27 @@ function renderPratica(){
           ${p.stato === 'chiusa' ? `<button class="btn btn-sec btn-sm" onclick="cambiaStato('riapri')">Riapri</button>` : `<button class="btn btn-sec btn-sm" onclick="cambiaStato('chiusa')">Chiudi pratica</button>`}
         </div>
       </div>
+      <div class="fasi-bar">
+        ${fasi.map(f => `<button class="fase-chip ${f.id === fase?.id ? 'active' : ''}" onclick="state.pr.faseId=${f.id};renderPratica()">
+          <b>${esc(f.nome)}</b><span>${esc(DOCTYPE_LABEL[f.document_type])}${state.pr.ordini.some(o => o.fase_id === f.id) ? ' · ✓ ordinata' : ''}</span></button>`).join('')}
+        <button class="fase-chip add" onclick="nuovaFase()">+ Fase</button>
+      </div>
+      ${fase ? `<div class="fase-det">
+        <div class="pr-meta" style="margin-top:0;">
+          <span><b>Tipo ordine</b>${esc(DOCTYPE_LABEL[fase.document_type])}</span>
+          ${dateFase(fase).map(x => `<span><b>${esc(x.l)}</b>${scadHtml(x.d, x.k)}</span>`).join('')}
+          <span><b>Destinazione</b>${esc(destTesto(fase.destinazione))}</span>
+          <button class="btn btn-sec btn-sm" onclick="modificaFase()">✎ Fase</button>
+        </div>
+        ${fase.note ? `<div class="muted" style="font-size:13px;margin-top:6px;">📝 ${esc(fase.note)}</div>` : ''}
+      </div>` : ''}
       <div class="steps">${s.map((x, i) => `<div class="step ${x.ok ? 'done' : i === cur ? 'cur' : ''}"><div class="dot">${x.ok ? '✓' : i + 1}</div>${x.t}</div>`).join('')}</div>
       <div class="next"><div class="t">👉 ${azione.t}</div>${azione.b ? `<button class="btn ${azione.b[2]}" onclick="${azione.b[1]}">${azione.b[0]}</button>` : ''}</div>
       <div class="log hidden" id="op-log"></div>
     </div>
     <div class="card">
       <div class="tabs">
-        ${[['titoli', `Titoli e inevasi (${righe.length})`], ['ordini', `Ordini (${ordini.length})`], ['mail', 'Mail a Messaggerie'], ['originale', 'Mail ricevuta'], ['storico', 'Storico']]
+        ${[['titoli', `Titoli e inevasi (${righeFase().length})`], ['ordini', `Ordini (${state.pr.ordini.length})`], ['mail', 'Mail a Messaggerie'], ['originale', 'Mail ricevuta'], ['storico', `Storico (${state.pr.eventi.length})`]]
           .map(([k, l]) => `<button class="tab ${state.pr.tab === k ? 'active' : ''}" onclick="vaiTab('${k}')">${l}</button>`).join('')}
       </div>
       <div id="tab-body"></div>
@@ -1253,6 +1420,7 @@ function vaiTab(k){ state.pr.tab = k; renderPratica(); }
 function opLog(html){ const el = $('op-log'); if (!el) return; el.classList.remove('hidden'); el.innerHTML += `<div>${html}</div>`; el.scrollTop = el.scrollHeight; }
 function renderTab(){
   const t = state.pr.tab, el = $('tab-body');
+  if (!faseCorrente() && (t === 'titoli' || t === 'mail')) { el.innerHTML = '<div class="empty">Nessuna fase: aggiungine una.</div>'; return; }
   if (t === 'titoli') el.innerHTML = tabTitoli();
   else if (t === 'ordini') el.innerHTML = tabOrdini();
   else if (t === 'mail') { el.innerHTML = tabMail(); componiMail(); }
@@ -1260,37 +1428,38 @@ function renderTab(){
   else el.innerHTML = tabStorico();
 }
 
-/* ── Tab Titoli e inevasi ── */
+/* ── Tab Titoli e inevasi (fase corrente) ── */
 function tabTitoli(){
-  const { righe, p } = state.pr;
-  const ordinati = state.pr.ordini.length > 0;
+  const { p } = state.pr;
+  const righe = righeFase();
+  const ordinati = ordiniFase().length > 0;
   return `
     <div class="toolbar">
       ${p.stato !== 'chiusa' ? `
-        <button class="btn btn-ok btn-sm" onclick="inviaOrdinePrincipale()">📤 Invia ordine (quantità non ancora ordinate)</button>
+        <button class="btn btn-sec btn-sm" onclick="aggiungiTitoli()">+ Titoli</button>
+        <button class="btn btn-ok btn-sm" onclick="inviaOrdinePrincipale()" ${righe.length ? '' : 'disabled'}>📤 Invia ordine (quantità non ancora ordinate)</button>
         <button class="btn btn-primary btn-sm" onclick="eseguiVerifica()" ${ordinati ? '' : 'disabled'}>🔎 Verifica evasione</button>
-        <button class="btn btn-sec btn-sm" onclick="apriRecupero()" ${righe.some(r => r.qta_inevasa > 0) ? '' : 'disabled'}>♻️ Ordine di recupero inevasi</button>
-        <button class="btn btn-sec btn-sm" onclick="aggiungiTitoli()">+ Titoli</button>` : ''}
-      <button class="btn btn-sec btn-sm" onclick="esportaExcel()" style="margin-left:auto;">⬇ Excel</button>
+        <button class="btn btn-sec btn-sm" onclick="apriRecupero()" ${righe.some(r => r.qta_inevasa > 0) ? '' : 'disabled'}>♻️ Ordine di recupero inevasi</button>` : ''}
+      <button class="btn btn-sec btn-sm" onclick="esportaExcel()" style="margin-left:auto;" ${righe.length ? '' : 'disabled'}>⬇ Excel</button>
     </div>
-    <div class="tbl-wrap"><table>
-      <thead><tr><th>EAN</th><th>Titolo / Editore</th><th class="num">Richieste</th><th class="num">Ordinate</th><th class="num">Evase</th><th class="num">Inevaso aperto</th><th>Motivo / stato</th><th>Ristampa</th><th>Note</th></tr></thead>
+    ${righe.length ? `<div class="tbl-wrap"><table>
+      <thead><tr><th>EAN</th><th>Titolo / Editore</th><th class="num">Richieste</th><th class="num">Ordinate</th><th class="num">Evase</th><th class="num">Inevaso aperto</th><th>Motivo / stato</th><th>Ristampa</th><th>Note</th><th></th></tr></thead>
       <tbody>${righe.map(r => {
-        const a = aggregaRiga(r.ean);
-        const manca = r.qta_richiesta - (a.ordinato - a.recupero);
+        const a = aggregaRiga(r);
         return `<tr>
           <td class="mono">${esc(r.ean)}</td>
           <td>${esc(r.titolo || '')}<div class="muted" style="font-size:12px;">${esc(r.editore || '')}</div></td>
-          <td class="num">${!ordinati || manca > 0 ? `<input type="number" min="0" value="${r.qta_richiesta}" onchange="aggiornaRiga(${r.id},{qta_richiesta:Math.max(0,+this.value||0)})">` : fmtN(r.qta_richiesta)}</td>
-          <td class="num">${a.ordinato ? fmtN(a.ordinato) + (a.recupero ? `<div class="muted" style="font-size:11px;">di cui ${a.recupero} recupero</div>` : '') : (ordinati ? '<span class="pill p-warn">da ordinare</span>' : '—')}</td>
-          <td class="num">${r.qta_evasa ?? (a.inAttesa ? '<span class="muted">in verifica</span>' : '—')}</td>
+          <td class="num">${!a.ordinato || a.daOrdinare > 0 ? `<input type="number" min="0" value="${r.qta_richiesta}" onchange="aggiornaRiga(${r.id},{qta_richiesta:Math.max(0,+this.value||0)})">` : fmtN(r.qta_richiesta)}</td>
+          <td class="num">${a.ordinato ? fmtN(a.ordinato) + (a.recupero ? `<div class="muted" style="font-size:11px;">di cui ${a.recupero} recupero</div>` : '') : '—'}${a.ordinato && a.daOrdinare ? `<div><span class="pill p-warn">+${a.daOrdinare} da ordinare</span></div>` : ''}</td>
+          <td class="num">${r.qta_evasa ?? (a.inAttesa ? '<span class="muted">da verificare</span>' : '—')}</td>
           <td class="num">${r.qta_inevasa ? `<span class="pill p-ko">${r.qta_inevasa}</span>` : (r.qta_inevasa === 0 ? '<span class="pill p-ok">0</span>' : '—')}</td>
           <td style="font-size:12px;">${esc(r.motivo_inevaso || '')}${r.stato_lavorazione ? `<div class="muted">${esc(r.stato_lavorazione)}</div>` : ''}</td>
           <td>${r.qta_inevasa || r.ristampa ? `<select onchange="aggiornaRiga(${r.id},{ristampa:this.value})">${Object.entries(RISTAMPA_LABEL).map(([k, l]) => `<option value="${k}" ${r.ristampa === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
             ${r.ristampa === 'confermata' ? `<input type="date" value="${r.ristampa_data || ''}" title="Data disponibilità ristampa" onchange="aggiornaRiga(${r.id},{ristampa_data:this.value||null})" style="margin-top:4px;">` : ''}` : '<span class="muted">—</span>'}</td>
           <td><input type="text" value="${esc(r.note || '')}" placeholder="…" onchange="aggiornaRiga(${r.id},{note:this.value||null})" style="min-width:120px;"></td>
+          <td>${a.ordinato ? '' : `<button class="btn btn-sec btn-sm" title="Togli il titolo" onclick="eliminaRiga(${r.id})">✕</button>`}</td>
         </tr>`; }).join('')}</tbody>
-    </table></div>
+    </table></div>` : '<div class="empty">Nessun titolo in questa fase. Aggiungili con <b>+ Titoli</b> man mano che arrivano da colleghi, agenti ed editori.</div>'}
     <div id="recupero-box"></div>`;
 }
 async function aggiornaRiga(id, campi){
@@ -1301,29 +1470,46 @@ async function aggiornaRiga(id, campi){
   if ('ristampa' in campi) await logEvento(state.pr.p.id, 'Ristampa ' + (RISTAMPA_LABEL[campi.ristampa] || '—').toLowerCase(), `${r.ean} ${r.titolo || ''}`);
   renderPratica();
 }
+async function eliminaRiga(id){
+  const r = state.pr.righe.find(x => x.id === id);
+  if (!confirm(`Togliere ${r.ean} ${r.titolo || ''} dalla fase?`)) return;
+  await sb.from('ff_righe').delete().eq('id', id);
+  await logEvento(state.pr.p.id, 'Titolo tolto · ' + faseCorrente().nome, `${r.ean} ${r.titolo || ''}`);
+  apriPratica(state.pr.p.id);
+}
 function aggiungiTitoli(){
-  modale(`<h3>Aggiungi titoli</h3>
-    <div class="field"><label>Uno per riga: EAN e copie</label><textarea id="m-tit" rows="6" placeholder="9788807035012 5"></textarea></div>
+  modale(`<h3>Aggiungi titoli · ${esc(faseCorrente().nome)}</h3>
+    <div class="field"><label>Uno per riga: EAN e copie (anche incollati da Excel)</label><textarea id="m-tit" rows="8" placeholder="9788807035012 5&#10;9788817140102;10"></textarea></div>
+    <div class="field" style="margin-top:10px;"><label>…oppure da file Excel/CSV</label><input type="file" id="m-file" accept=".xlsx,.xls,.csv"></div>
     <div class="row" style="margin-top:12px;"><button class="btn btn-primary" id="m-ok">Aggiungi</button><button class="btn btn-sec" onclick="chiudiModale()">Annulla</button></div>`);
   $('m-ok').onclick = async () => {
-    const nuovi = unisciTitoli(titoliDaTesto($('m-tit').value));
+    let lista = titoliDaTesto($('m-tit').value);
+    const file = $('m-file').files[0];
+    if (file) lista = lista.concat(titoliDaFoglio(new Uint8Array(await file.arrayBuffer())));
+    const nuovi = unisciTitoli(lista);
     if (!nuovi.length) { toast('Nessun EAN valido.'); return; }
-    const esistenti = new Map(state.pr.righe.map(r => [r.ean, r]));
+    const fase = faseCorrente();
+    const esistenti = new Map(righeFase().map(r => [r.ean, r]));
     for (const t of nuovi) {
       const ex = esistenti.get(t.ean);
       if (ex) await sb.from('ff_righe').update({ qta_richiesta: ex.qta_richiesta + t.qta }).eq('id', ex.id);
-      else await sb.from('ff_righe').insert({ pratica_id: state.pr.p.id, ean: t.ean, qta_richiesta: t.qta, titolo: t.titolo || null });
+      else await sb.from('ff_righe').insert({ pratica_id: state.pr.p.id, fase_id: fase.id, ean: t.ean, qta_richiesta: t.qta, titolo: t.titolo || null, editore: t.editore || null });
     }
-    await logEvento(state.pr.p.id, 'Titoli aggiunti', nuovi.map(t => `${t.ean} ×${t.qta}`).join(', '));
+    await logEvento(state.pr.p.id, 'Titoli aggiunti · ' + fase.nome, `${nuovi.length} titoli, ${nuovi.reduce((s, t) => s + t.qta, 0)} copie`);
     chiudiModale(); apriPratica(state.pr.p.id);
   };
 }
 async function inviaOrdinePrincipale(){
-  const { righe } = state.pr;
-  const items = righe.map(r => { const a = aggregaRiga(r.ean); return { ean: r.ean, qta: r.qta_richiesta - (a.ordinato - a.recupero), editore: r.editore, titolo: r.titolo }; }).filter(x => x.qta > 0);
+  const fase = faseCorrente();
+  const items = righeFase().map(r => ({ ean: r.ean, qta: aggregaRiga(r).daOrdinare, editore: r.editore, titolo: r.titolo })).filter(x => x.qta > 0);
   if (!items.length) { toast('Tutte le quantità richieste sono già state ordinate.'); return; }
+  const oggi = oggiIso();
+  const avvisi = [];
+  if (fase.inserire_dal && oggi < fase.inserire_dal) avvisi.push(`⚠️ Per questa fase Messaggerie chiede di inserire gli ordini DAL ${fmtData(fase.inserire_dal)}.`);
+  if (fase.inserire_entro && oggi > fase.inserire_entro) avvisi.push(`⚠️ Il termine di inserimento (${fmtData(fase.inserire_entro)}) è passato.`);
+  if (fase.annullo_dal && oggi >= fase.annullo_dal) avvisi.push(`⚠️ Dal ${fmtData(fase.annullo_dal)} Messaggerie annulla le righe aperte.`);
   const copie = items.reduce((s, x) => s + x.qta, 0);
-  if (!confirm(`Inviare a Messaggerie l'ordine per ${items.length} titoli (${copie} copie) al cliente ${state.pr.p.cliente_codice || '?'}?\nL'operazione non è annullabile da qui.`)) return;
+  if (!confirm(`${avvisi.length ? avvisi.join('\n') + '\n\n' : ''}Inviare a Messaggerie l'ordine ${DOCTYPE_LABEL[fase.document_type]} (fase "${fase.nome}") per ${items.length} titoli, ${copie} copie?\nCliente: ${state.pr.p.cliente_codice || '?'} · Destinazione: ${destTesto(fase.destinazione)}\nL'operazione non è annullabile da qui.`)) return;
   await esegui(async () => { await inviaOrdini(items, 'principale', opLog); });
 }
 async function eseguiVerifica(){ await esegui(() => verificaEvasione(opLog)); }
@@ -1340,15 +1526,17 @@ async function esegui(fn){
 }
 function apriRecupero(){
   const box = $('recupero-box'); if (!box) return;
-  const cand = state.pr.righe.filter(r => r.qta_inevasa > 0);
+  const fase = faseCorrente();
+  const cand = righeFase().filter(r => r.qta_inevasa > 0);
+  const limite = fase.consegna_tassativa || fase.consegna_fino;
   box.innerHTML = `<div class="card" style="margin-top:14px;background:var(--card-2);">
-    <h3>♻️ Ordine di recupero inevasi</h3>
-    <p class="muted" style="margin-bottom:10px;">Seleziona i titoli da rimettere in ordine (es. ristampa confermata e tempi compatibili con la consegna${state.pr.p.scadenza_consegna ? ' del ' + fmtData(state.pr.p.scadenza_consegna) : ''}). La quantità proposta è l'inevaso aperto.</p>
+    <h3>♻️ Ordine di recupero inevasi · ${esc(fase.nome)}</h3>
+    <p class="muted" style="margin-bottom:10px;">Seleziona i titoli da rimettere in ordine (es. ristampa confermata e tempi compatibili${limite ? ' con la consegna del ' + fmtData(limite) : ''}). La quantità proposta è l'inevaso aperto.</p>
     <table><thead><tr><th></th><th>EAN</th><th>Titolo</th><th>Ristampa</th><th class="num">Inevaso</th><th class="num">Da riordinare</th></tr></thead>
     <tbody>${cand.map(r => `<tr>
       <td><input type="checkbox" class="rec-chk" data-id="${r.id}" ${r.ristampa !== 'non_prevista' ? 'checked' : ''}></td>
       <td class="mono">${esc(r.ean)}</td><td>${esc(r.titolo || '')}</td>
-      <td>${esc(RISTAMPA_LABEL[r.ristampa] || '—')}${r.ristampa_data ? ' · ' + fmtData(r.ristampa_data) : ''}</td>
+      <td>${esc(RISTAMPA_LABEL[r.ristampa] || '—')}${r.ristampa_data ? ' · ' + fmtData(r.ristampa_data) : ''}${r.ristampa_data && limite && r.ristampa_data > limite ? ' <span class="pill p-ko">oltre la consegna</span>' : ''}</td>
       <td class="num">${r.qta_inevasa}</td>
       <td class="num"><input type="number" class="rec-qta" data-id="${r.id}" min="1" value="${r.qta_inevasa}"></td></tr>`).join('')}</tbody></table>
     <div class="row" style="margin-top:12px;">
@@ -1369,25 +1557,30 @@ async function inviaRecupero(){
   await esegui(async () => { await inviaOrdini(items, 'recupero', opLog); await ricalcolaRighe(); });
 }
 function esportaExcel(){
-  const { p, righe } = state.pr;
-  const aoa = [['EAN', 'Titolo', 'Editore', 'Richieste', 'Ordinate', 'Evase', 'Inevaso aperto', 'Motivo inevaso', 'Ristampa', 'Data ristampa', 'Note']];
-  righe.forEach(r => { const a = aggregaRiga(r.ean); aoa.push([r.ean, r.titolo || '', r.editore || '', r.qta_richiesta, a.ordinato, r.qta_evasa ?? '', r.qta_inevasa ?? '', r.motivo_inevaso || '', RISTAMPA_LABEL[r.ristampa] || '', r.ristampa_data || '', r.note || '']); });
+  const { p } = state.pr;
+  const aoa = [['Fase', 'EAN', 'Titolo', 'Editore', 'Richieste', 'Ordinate', 'Evase', 'Inevaso aperto', 'Motivo inevaso', 'Ristampa', 'Data ristampa', 'Note']];
+  state.pr.fasi.forEach(f => state.pr.righe.filter(r => r.fase_id === f.id).forEach(r => {
+    const a = aggregaRiga(r);
+    aoa.push([f.nome, r.ean, r.titolo || '', r.editore || '', r.qta_richiesta, a.ordinato, r.qta_evasa ?? '', r.qta_inevasa ?? '', r.motivo_inevaso || '', RISTAMPA_LABEL[r.ristampa] || '', r.ristampa_data || '', r.note || '']);
+  }));
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Titoli');
   XLSX.writeFile(wb, `${p.numero}_${p.evento.replace(/[^\w]+/g, '_').slice(0, 40)}.xlsx`);
 }
 
-/* ── Tab Ordini ── */
+/* ── Tab Ordini (tutte le fasi) ── */
 function tabOrdini(){
-  const { ordini } = state.pr;
+  const { ordini, fasi } = state.pr;
   if (!ordini.length) return '<div class="empty">Nessun ordine ancora inviato a Messaggerie.</div>';
+  const nomeFase = id => fasi.find(f => f.id === id)?.nome || '—';
   return `<div class="tbl-wrap"><table>
-    <thead><tr><th>N. ordine Messaggerie</th><th>Tipo</th><th>Utenza</th><th>Inviato</th><th class="num">Titoli</th><th class="num">Copie</th><th class="num">Evase</th><th class="num">Inevase</th><th>Verificato</th><th>Comunicato</th></tr></thead>
+    <thead><tr><th>N. ordine Messaggerie</th><th>Fase</th><th>Tipo</th><th>Utenza</th><th>Inviato</th><th class="num">Titoli</th><th class="num">Copie</th><th class="num">Evase</th><th class="num">Inevase</th><th>Verificato</th><th>Comunicato</th></tr></thead>
     <tbody>${ordini.map(o => {
       const ev = o.verificato_at ? (o.righe || []).reduce((s, r) => s + n(r.evaso), 0) : null;
       const inv = o.verificato_at ? (o.righe || []).reduce((s, r) => s + n(r.inevaso), 0) : null;
       return `<tr>
         <td class="mono"><b>${esc(o.numero_interno || '…in arrivo')}</b>${o.batch_id ? `<div class="muted" style="font-size:11px;">BatchID ${o.batch_id}</div>` : ''}</td>
-        <td>${o.tipo === 'recupero' ? '<span class="pill p-warn">Recupero</span>' : '<span class="pill p-ok">Principale</span>'}</td>
+        <td>${esc(nomeFase(o.fase_id))}</td>
+        <td>${esc(DOCTYPE_LABEL[o.document_type] || o.document_type || '')} ${o.tipo === 'recupero' ? '<span class="pill p-warn">Recupero</span>' : ''}</td>
         <td>${esc(ACCOUNT_LABEL[o.account] || o.account)}</td>
         <td>${fmtDataOra(o.created_at)}</td>
         <td class="num">${o.titoli}</td><td class="num">${o.copie}</td>
@@ -1398,9 +1591,9 @@ function tabOrdini(){
     <div style="margin-top:10px;"><button class="btn btn-sec btn-sm" onclick="aggiornaNumeri()">🔄 Aggiorna numeri ordine</button></div>`;
 }
 
-/* ── Tab Mail a Messaggerie: genera la risposta con i numeri d'ordine ── */
+/* ── Tab Mail a Messaggerie (fase corrente): risposta con i numeri d'ordine ── */
 function tabMail(){
-  const { ordini } = state.pr;
+  const ordini = ordiniFase();
   const daComunicare = ordini.filter(o => !o.comunicato_at);
   return `
     <div class="row">
@@ -1420,7 +1613,7 @@ function tabMail(){
       <button class="btn btn-sec" onclick="copiaMail()">📋 Copia testo</button>
       <button class="btn btn-ok" onclick="segnaComunicato()" ${daComunicare.length ? '' : 'disabled'}>✓ Segna come comunicato a Messaggerie</button>
     </div>
-    <p class="muted" style="margin-top:8px;font-size:12px;">"Apri in Outlook" scarica una bozza già compilata: aprila con un doppio clic, controlla e premi Invia. Poi segna la pratica come comunicata.</p>`;
+    <p class="muted" style="margin-top:8px;font-size:12px;">"Apri in Outlook" scarica una bozza già compilata: aprila con un doppio clic, controlla e premi Invia. Poi segna la fase come comunicata.</p>`;
 }
 function firma(){
   const e = state.me?.email || '';
@@ -1428,26 +1621,25 @@ function firma(){
   return `${nome}\nPDE`;
 }
 function componiMail(){
-  const { p, righe, ordini } = state.pr;
+  const { p } = state.pr;
+  const fase = faseCorrente(), righe = righeFase(), ordini = ordiniFase();
   const tipo = $('mail-tipo').value;
-  const saluto = p.mitt_nome ? `Buongiorno ${p.mitt_nome.split(/\s+/)[0]},` : 'Buongiorno,';
-  const evento = p.evento + (p.luogo ? ` (${p.luogo})` : '') + (p.data_inizio ? `, ${fmtData(p.data_inizio)}${p.data_fine && p.data_fine !== p.data_inizio ? '–' + fmtData(p.data_fine) : ''}` : '');
-  const cliente = [p.cliente_nome, p.cliente_codice ? 'cod. ' + p.cliente_codice : ''].filter(Boolean).join(' – ');
-  const ogg = p.mail_oggetto ? 'R: ' + p.mail_oggetto.replace(/^\s*((r|re|i|fw|fwd|inoltro)\s*:\s*)+/i, '') : `${p.evento} – ordine PDE`;
-  const lineaOrd = o => `• N. ordine ${o.numero_interno || '(in assegnazione, BatchID ' + o.batch_id + ')'} – ${o.titoli} titoli, ${o.copie} copie${o.tipo === 'recupero' ? ' (ordine di recupero)' : ''}`;
+  const evento = p.evento + (p.luogo ? ` (${p.luogo})` : '');
+  const cliente = [p.cliente_codice ? 'cod. ' + p.cliente_codice : '', p.cliente_nome].filter(Boolean).join(' ');
+  const ogg = p.mail_oggetto ? 'R: ' + pulisciOggetto(p.mail_oggetto) : `${p.evento} – ordine PDE`;
+  const lineaOrd = o => `• N. ordine ${o.numero_interno || '(in assegnazione, BatchID ' + o.batch_id + ')'} – ${DOCTYPE_LABEL[o.document_type] || ''} – ${o.titoli} titoli, ${o.copie} copie${o.tipo === 'recupero' ? ' (ordine integrativo)' : ''}`;
+  const nomeFase = state.pr.fasi.length > 1 ? ` (${fase.nome})` : '';
   let testo, oggetto;
   if (tipo === 'conferma') {
     const princ = ordini.filter(o => o.tipo === 'principale');
-    const nonOrd = righe.filter(r => { const a = aggregaRiga(r.ean); return r.qta_richiesta - (a.ordinato - a.recupero) > 0; });
-    oggetto = `${ogg} – ordine inserito${princ.length ? ' n. ' + princ.map(o => o.numero_interno || '…').join(', ') : ''}`;
-    testo = `${saluto}
+    const nonOrd = righe.filter(r => aggregaRiga(r).daOrdinare > 0);
+    oggetto = `${ogg} – ordine inserito${princ.length ? ' rif. ' + princ.map(o => o.numero_interno || '…').join(', ') : ''}`;
+    testo = `Buongiorno,
 
-vi confermiamo l'inserimento dell'ordine per ${evento}.
-Cliente: ${cliente || '—'}
-Riferimento: ${p.order_reference || p.numero}
+vi confermiamo l'inserimento degli ordini${nomeFase} per ${evento}, cliente ${cliente || '—'}.
 
 ${princ.length ? princ.map(lineaOrd).join('\n') : '(nessun ordine ancora inserito)'}
-${nonOrd.length ? `\nNon è stato possibile inserire i seguenti titoli (in verifica):\n${nonOrd.map(r => `• ${r.ean} ${r.titolo || ''}`).join('\n')}\n` : ''}${p.scadenza_consegna ? `\nConsegna richiesta entro il ${fmtData(p.scadenza_consegna)}.\n` : ''}
+${fase.destinazione ? `\nDestinazione: ${destTesto(fase.destinazione)}\n` : ''}${fase.consegna_tassativa ? `\nConsegna tassativa richiesta: ${fmtData(fase.consegna_tassativa)}.\n` : ''}${nonOrd.length ? `\nNon è stato ancora possibile inserire i seguenti titoli (in verifica):\n${nonOrd.map(r => `• ${r.ean} ${r.titolo || ''}`).join('\n')}\n` : ''}
 Restiamo a disposizione per qualsiasi necessità.
 
 Cordiali saluti,
@@ -1456,10 +1648,10 @@ ${firma()}`;
     const inev = righe.filter(r => r.qta_inevasa > 0);
     const evase = righe.reduce((s, r) => s + n(r.qta_evasa), 0);
     const rec = ordini.filter(o => o.tipo === 'recupero');
-    oggetto = `${ogg} – aggiornamento evasione`;
-    testo = `${saluto}
+    oggetto = `${ogg} – aggiornamento evasione${nomeFase}`;
+    testo = `Buongiorno,
 
-vi aggiorniamo sullo stato dell'ordine per ${evento} (cliente ${cliente || '—'}).
+vi aggiorniamo sullo stato degli ordini${nomeFase} per ${evento} (cliente ${cliente || '—'}).
 
 Ordini: ${ordini.map(o => o.numero_interno || '…').join(', ')}
 Copie evase: ${evase}
@@ -1493,10 +1685,10 @@ function apriMailto(){
 }
 async function copiaMail(){ await navigator.clipboard.writeText($('mail-testo').value); toast('Testo copiato'); }
 async function segnaComunicato(){
-  const ids = state.pr.ordini.filter(o => !o.comunicato_at).map(o => o.id);
+  const ids = ordiniFase().filter(o => !o.comunicato_at).map(o => o.id);
   if (!ids.length) return;
   await sb.from('ff_ordini').update({ comunicato_at: new Date().toISOString() }).in('id', ids);
-  await logEvento(state.pr.p.id, 'Comunicato a Messaggerie', `${$('mail-oggetto').value} → ${$('mail-a').value}`);
+  await logEvento(state.pr.p.id, 'Comunicato a Messaggerie · ' + faseCorrente().nome, `${$('mail-oggetto').value} → ${$('mail-a').value}`);
   toast('Segnato come comunicato'); apriPratica(state.pr.p.id);
 }
 
@@ -1509,7 +1701,7 @@ function tabOriginale(){
       ${p.mail_file_nome ? `<span><b>File</b>${esc(p.mail_file_nome)}</span>` : ''}</div>
     <div style="font-weight:600;margin-bottom:8px;">${esc(p.mail_oggetto || '')}</div>
     <pre class="mail">${esc(p.mail_testo || '(testo non disponibile)')}</pre>
-    ${p.note ? `<h3 style="margin-top:14px;">Note</h3><p>${esc(p.note)}</p>` : ''}`;
+    ${p.note ? `<h3 style="margin-top:14px;">Note</h3><p style="white-space:pre-wrap;">${esc(p.note)}</p>` : ''}`;
 }
 function tabStorico(){
   const ev = state.pr.eventi;
@@ -1517,14 +1709,14 @@ function tabStorico(){
       <div class="field lg"><input type="text" id="nota-ev" placeholder="Aggiungi una nota (es. sentito l'editore per la ristampa, accordo con Messaggerie…)"></div>
       <button class="btn btn-sec" onclick="aggiungiNota()">Aggiungi nota</button></div>
     ${ev.length ? ev.map(e => `<div class="ev"><div class="when">${fmtDataOra(e.created_at)}<div class="who">${esc(e.utente || '')}</div></div>
-      <div><b>${esc(e.azione)}</b>${e.dettaglio ? `<div class="muted" style="font-size:13px;">${esc(e.dettaglio)}</div>` : ''}</div></div>`).join('') : '<div class="empty">Nessun evento.</div>'}`;
+      <div><b>${esc(e.azione)}</b>${e.dettaglio ? `<div class="muted" style="font-size:13px;white-space:pre-wrap;">${esc(e.dettaglio)}</div>` : ''}</div></div>`).join('') : '<div class="empty">Nessun evento.</div>'}`;
 }
 async function aggiungiNota(){
   const t = $('nota-ev').value.trim(); if (!t) return;
   await logEvento(state.pr.p.id, 'Nota', t); apriPratica(state.pr.p.id);
 }
 
-/* ── Modifica dati / stato ── */
+/* ── Modifica dati / fasi / stato ── */
 async function aggiornaPratica(campi){
   const { error } = await sb.from('ff_pratiche').update(campi).eq('id', state.pr.p.id);
   if (error) { toast('Errore: ' + error.message); return false; }
@@ -1547,12 +1739,12 @@ async function cambiaStato(azione){
 }
 function modale(html){ chiudiModale(); const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'modale'; bg.innerHTML = `<div class="modal">${html}</div>`; bg.onclick = e => { if (e.target === bg) chiudiModale(); }; document.body.appendChild(bg); }
 function chiudiModale(){ $('modale')?.remove(); }
+const campo = (id, label, v, type = 'text', cls = '') => `<div class="field ${cls}"><label>${label}</label><input type="${type}" id="${id}" value="${esc(v || '')}"></div>`;
 function modificaDati(){
   const p = state.pr.p;
-  const campo = (id, label, v, type = 'text', cls = '') => `<div class="field ${cls}"><label>${label}</label><input type="${type}" id="${id}" value="${esc(v || '')}"></div>`;
   modale(`<h3>Modifica dati pratica ${esc(p.numero)}</h3>
     <div class="row">${campo('e-evento', 'Evento', p.evento, 'text', 'lg')}${campo('e-luogo', 'Luogo', p.luogo)}</div>
-    <div class="row" style="margin-top:10px;">${campo('e-dal', 'Dal', p.data_inizio, 'date', 'sm')}${campo('e-al', 'Al', p.data_fine, 'date', 'sm')}${campo('e-scad', 'Scadenza ordine', p.scadenza_ordine, 'date', 'sm')}${campo('e-cons', 'Consegna entro', p.scadenza_consegna, 'date', 'sm')}</div>
+    <div class="row" style="margin-top:10px;">${campo('e-dal', 'Evento dal', p.data_inizio, 'date', 'sm')}${campo('e-al', 'al', p.data_fine, 'date', 'sm')}</div>
     <div class="row" style="margin-top:10px;">${campo('e-clinome', 'Cliente', p.cliente_nome)}${campo('e-clicod', 'Codice cliente', p.cliente_codice, 'text', 'sm')}${campo('e-rif', 'Riferimento ordine', p.order_reference)}</div>
     <div class="row" style="margin-top:10px;">${campo('e-mnome', 'Mittente Messaggerie', p.mitt_nome)}${campo('e-mmail', 'Email risposta', p.mitt_email)}</div>
     <label style="display:flex;gap:6px;align-items:center;margin-top:12px;"><input type="checkbox" id="e-tard" ${p.accordo_tardiva ? 'checked' : ''}> Accordo con Messaggerie per consegna tardiva</label>
@@ -1561,7 +1753,7 @@ function modificaDati(){
       <button class="btn btn-ko" style="margin-left:auto;" id="e-del">Elimina pratica</button></div>`);
   $('e-ok').onclick = async () => {
     const v = id => $(id).value.trim() || null;
-    const campi = { evento: v('e-evento') || p.evento, luogo: v('e-luogo'), data_inizio: v('e-dal'), data_fine: v('e-al'), scadenza_ordine: v('e-scad'), scadenza_consegna: v('e-cons'),
+    const campi = { evento: v('e-evento') || p.evento, luogo: v('e-luogo'), data_inizio: v('e-dal'), data_fine: v('e-al'),
       cliente_nome: v('e-clinome'), cliente_codice: v('e-clicod'), order_reference: v('e-rif'), mitt_nome: v('e-mnome'), mitt_email: v('e-mmail'), accordo_tardiva: $('e-tard').checked, note: v('e-note') };
     const cambiati = Object.keys(campi).filter(k => (campi[k] ?? null) !== (p[k] ?? null));
     if (await aggiornaPratica(campi)) {
@@ -1572,9 +1764,63 @@ function modificaDati(){
   $('e-del').onclick = async () => {
     if (state.pr.ordini.length && !confirm('La pratica ha ordini già inviati a Messaggerie (non vengono annullati). Eliminarla comunque?')) return;
     if (!confirm(`Eliminare definitivamente la pratica ${p.numero}?`)) return;
-    const { error, count } = await sb.from('ff_pratiche').delete({ count: 'exact' }).eq('id', p.id);
-    if (error || !count) { toast(error ? 'Errore: ' + error.message : 'Eliminazione riservata agli amministratori PDE.', 5000); return; }
+    const { error } = await sb.from('ff_pratiche').delete().eq('id', p.id);
+    if (error) { toast('Errore: ' + error.message, 5000); return; }
     chiudiModale(); toast('Pratica eliminata'); mostra('elenco'); caricaElenco();
+  };
+}
+function formFase(f){
+  const d = f.destinazione || {};
+  return `<div class="row">${campo('g-nome', 'Nome fase', f.nome, 'text', 'lg')}
+      <div class="field sm"><label>Tipo ordine</label><select id="g-tipo">${Object.entries(DOCTYPE_LABEL).map(([k, l]) => `<option value="${k}" ${f.document_type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+    <div class="row" style="margin-top:10px;">${DATE_FASE.map(([k, l]) => campo('g-' + k, l, f[k], 'date', 'sm')).join('')}</div>
+    <label style="display:flex;gap:6px;align-items:center;margin-top:12px;"><input type="checkbox" id="g-dest" ${f.destinazione ? 'checked' : ''} onchange="$('g-dest-box').classList.toggle('hidden',!this.checked)"> Destinazione alternativa</label>
+    <div id="g-dest-box" class="${f.destinazione ? '' : 'hidden'}">
+      <div class="row" style="margin-top:8px;">${campo('g-d-nome', 'Ragione sociale / presso', d.companyName, 'text', 'lg')}${campo('g-d-ind', 'Indirizzo', d.address, 'text', 'lg')}</div>
+      <div class="row" style="margin-top:8px;">${campo('g-d-cap', 'CAP', d.postalCode, 'text', 'sm')}${campo('g-d-citta', 'Località', d.city)}${campo('g-d-prov', 'Prov.', d.province, 'text', 'sm')}${campo('g-d-tel', 'Telefono', d.phone)}</div>
+    </div>
+    <div class="field" style="margin-top:10px;"><label>Note della fase</label><textarea id="g-note" rows="2">${esc(f.note || '')}</textarea></div>`;
+}
+function leggiFormFase(){
+  const v = id => $(id).value.trim() || null;
+  const dest = $('g-dest').checked ? { companyName: v('g-d-nome') || '', address: v('g-d-ind') || '', postalCode: v('g-d-cap') || '', city: v('g-d-citta') || '', province: (v('g-d-prov') || '').toUpperCase(), country: 'IT', phone: v('g-d-tel') || '', email: '' } : null;
+  if (dest && (!dest.companyName || !dest.address)) { toast('Per la destinazione alternativa servono ragione sociale e indirizzo.'); return null; }
+  if (!v('g-nome')) { toast('Dai un nome alla fase.'); return null; }
+  const out = { nome: v('g-nome'), document_type: $('g-tipo').value, destinazione: dest, note: v('g-note') };
+  DATE_FASE.forEach(([k]) => out[k] = v('g-' + k));
+  return out;
+}
+function modificaFase(){
+  const f = faseCorrente();
+  const haOrdini = ordiniFase().length > 0;
+  modale(`<h3>Fase: ${esc(f.nome)}</h3>${formFase(f)}
+    ${haOrdini ? '<p class="muted" style="font-size:12px;margin-top:8px;">Gli ordini già inviati restano com\'erano: tipo e destinazione nuovi valgono per i prossimi.</p>' : ''}
+    <div class="row" style="margin-top:14px;"><button class="btn btn-primary" id="g-ok">Salva</button><button class="btn btn-sec" onclick="chiudiModale()">Annulla</button>
+    ${!haOrdini && state.pr.fasi.length > 1 ? '<button class="btn btn-ko" style="margin-left:auto;" id="g-del">Elimina fase</button>' : ''}</div>`);
+  $('g-ok').onclick = async () => {
+    const campi = leggiFormFase(); if (!campi) return;
+    const { error } = await sb.from('ff_fasi').update(campi).eq('id', f.id);
+    if (error) { toast('Errore: ' + error.message); return; }
+    await logEvento(state.pr.p.id, 'Fase modificata', campi.nome);
+    chiudiModale(); apriPratica(state.pr.p.id);
+  };
+  if ($('g-del')) $('g-del').onclick = async () => {
+    if (!confirm(`Eliminare la fase "${f.nome}" e i suoi titoli?`)) return;
+    await sb.from('ff_fasi').delete().eq('id', f.id);
+    await logEvento(state.pr.p.id, 'Fase eliminata', f.nome);
+    state.pr.faseId = null; chiudiModale(); apriPratica(state.pr.p.id);
+  };
+}
+function nuovaFase(){
+  modale(`<h3>Nuova fase</h3>${formFase({ nome: 'Rifornimenti', document_type: 'restock' })}
+    <div class="row" style="margin-top:14px;"><button class="btn btn-primary" id="g-ok">Aggiungi</button><button class="btn btn-sec" onclick="chiudiModale()">Annulla</button></div>`);
+  $('g-ok').onclick = async () => {
+    const campi = leggiFormFase(); if (!campi) return;
+    const pos = Math.max(0, ...state.pr.fasi.map(f => f.posizione)) + 1;
+    const { data, error } = await sb.from('ff_fasi').insert({ ...campi, pratica_id: state.pr.p.id, posizione: pos }).select().single();
+    if (error) { toast('Errore: ' + error.message); return; }
+    await logEvento(state.pr.p.id, 'Fase aggiunta', campi.nome);
+    state.pr.faseId = data.id; chiudiModale(); apriPratica(state.pr.p.id);
   };
 }
 
