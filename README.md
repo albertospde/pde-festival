@@ -29,7 +29,8 @@ Libri collegato (per titoli ed evasione), entrambi da BookUp → Accessi.
 `ff_eventi`, `ff_contatori`; `..._fasi.sql` aggiunge `ff_fasi`. Applicate il 2026-10-07.
 
 ## Logo
-`py scripts/crea_logo.py` rigenera i file in `logo/` (stesso pavone e caratteri di Giro Manager).
+Intestazione e accesso usano il kit condiviso del PDE Hub (`pde-hub/assets/pde-app-logo.css`, motto
+GESTIONE FESTIVAL E FIERE). In `logo/` restano favicon e immagini storiche (`py scripts/crea_logo.py`).
 
 ## Accesso
 Per ora riservata a `alberto.simola@pde.it`. Per abilitare altri utenti:
